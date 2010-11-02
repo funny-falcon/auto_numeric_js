@@ -171,12 +171,12 @@
 				/* if(kdCode == 110 && this.value.indexOf(io.aDec) == -1 && io.mDec > 0 && caretPos >= this.value.length - io.mDec && this.value.lastIndexOf(io.aSep) < caretPos && this.value.lastIndexOf('-') < caretPos){ //start modification for period key to enter a comma on numeric pad 
 					$(this).val(this.value.substring(0, caretPos) + io.aDec + this.value.substring(inLength, caretPos));
 				}*/
-				$(autoId(ii)).val(autoGroup(this.value, io));/* adds the thousand sepparator */
+				iv.val(autoGroup(this.value, io));/* adds the thousand sepparator */
 				var outLength = this.value.length;	
 				charLeft = (this.value.lastIndexOf(io.aDec) == -1) ? outLength : outLength - (outLength - this.value.lastIndexOf(io.aDec));
 				numLeft = autoCount(this.value, 0, charLeft);/* the number of intergers to the left of the decimal point */
 				if (numLeft > io.mNum){/* if max number of characters are exceeeded */
-					$(autoId(ii)).val('');
+					iv.val('');
 				}	
 				var setCaret = 0;/* start - determines the new caret position  */
 				if (inLength < outLength){/* new caret position when a number or decimal character has been added */
@@ -231,15 +231,18 @@
 					iField.selectionEnd = setCaret;
 				}/* end - set caret position */ 
 			}).bind('change focusout', function(){/* start change - thanks to Javier P. corrected the inline onChange event  added focusout version 1.55*/
-				if ($(autoId(ii)).val() !== ''){
-					autoCheck(iv, ii, io);
+				if (iv.val() !== ''){
+					autoCheck(iv, io);
 				}		
-			}).bind('paste', function(){setTimeout(function(){autoCheck(iv, ii, io);}, 0); });/* thanks to Josh of Digitalbush.com Opera does not fire paste event*/
+			}).bind('paste', function(){setTimeout(function(){autoCheck(iv, io);}, 0); });/* thanks to Josh of Digitalbush.com Opera does not fire paste event*/
 		});
 	};
-	function autoId(myid) {/* thanks to Anthony & Evan C */
-		myid = myid.replace(/\[/g, "\\[").replace(/\]/g, "\\]"); 
-		return '#' + myid.replace(/(:|\.)/g,'\\$1');
+	function autoGet(obj) {/* thanks to Anthony & Evan C */
+	    if (typeof(obj) == 'string') {
+		  obj = obj.replace(/\[/g, "\\[").replace(/\]/g, "\\]");
+		  obj = '#' + obj.replace(/(:|\.)/g,'\\$1'); 
+		}
+		return $(obj);
 	}
 	function autoCount(str, start, end){/* private function that counts the numeric characters to the left and right of the decimal point */
 		var chr = '';
@@ -384,10 +387,10 @@
 		}
 		return nSign + ivRounded;/* return rounded value */
 	} 
-	function autoCheck(iv, ii, io){/*  private function that change event and pasted values  */
-		iv = iv.val();
-		if (iv.length > 100){/* maximum length of pasted value */
-			$(autoId(ii)).val('');
+	function autoCheck(iv, io){/*  private function that change event and pasted values  */
+		var val = iv.val();
+		if ( val.length > 100 ) { /* maximum length of pasted value */
+			iv.val('');
 			return;
 		}
 		var eNeg = '';
@@ -395,7 +398,7 @@
 			eNeg = '\\-';
 		}
 		var reg = new RegExp('[^'+eNeg+io.aNum+io.aDec+']','gi');/* regular expreession constructor to delete any characters not allowed for the input field. */
-		var testPaste = iv.replace(reg,'');/* deletes all characters that are not permitted in this field */
+		var testPaste = val.replace(reg,'');/* deletes all characters that are not permitted in this field */
 		if (testPaste.lastIndexOf('-') > 0 || testPaste.indexOf(io.aDec) != testPaste.lastIndexOf(io.aDec)){/* deletes input if the negitive sign is incorrectly placed or if the are multiple decimal characters */
 			testPaste = '';
 		} 
@@ -438,14 +441,14 @@
 		if (rePaste !== '' && io.aSep !== ''){
 			rePaste = autoGroup(rePaste, io);/* calls the group function adds digital grouping */
 		}
-		$(autoId(ii)).val(rePaste);
+		iv.val(rePaste);
 		return false;
 	}
 	$.fn.autoNumeric.Strip = function(ii, options){/* public function that stripes the format and converts decimal seperator to a period */
 		var opts = $.extend({}, $.fn.autoNumeric.defaults, options);
-		var io = $.metadata ? $.extend({}, opts, $(autoId(ii)).metadata()) : opts;
+		var io = $.metadata ? $.extend({}, opts, autoGet(ii).metadata()) : opts;
 		io.mDec = isNaN(io.mDec * 1) ? $('#' + io.mDec).val() * 1 : io.mDec * 1;/* decimal places */
-		var iv = $(autoId(ii)).val();
+		var iv = autoGet(ii).val();
 		iv = iv.replace(io.aSign, '').replace('\u00A0','');
 		var reg = new RegExp('[^'+'\\-'+io.aNum+io.aDec+']','gi');/* regular expreession constructor */
 		iv = iv.replace(reg,'');/* deletes all characters that are not permitted in this field */
@@ -467,7 +470,7 @@
 	$.fn.autoNumeric.Format = function(ii, iv, options){/* public function that recieves a numeric string and formats to the target input field */
 		iv += '';/* to string */
 		var opts = $.extend({}, $.fn.autoNumeric.defaults, options);
-		var io = $.metadata ? $.extend({}, opts, $(autoId(ii)).metadata()) : opts;
+		var io = $.metadata ? $.extend({}, opts, autoGet(ii).metadata()) : opts;
 		io.mDec = isNaN(io.mDec * 1) ? $('#' + io.mDec).val() * 1 : io.mDec * 1;/* decimal places */
         iv = autoRound(iv, io.mDec, io.mRound, io.aPad);
 		var nNeg = 0;
