@@ -46,6 +46,19 @@
 			var numLeft = 0;/* number of numeric characters to the left of the decimal point */
 			var numRight = 0;/* number of numeric characters to the right of the decimal point */
 			var cmdKey = false;/* MAC command ket pressed */
+			var setCarretPos = function(pos){
+				var that = iv[0];
+				caretPos = pos;
+				if ( that.selectionStart || that.selectionStart == '0') {
+					that.selectionStart = pos;
+					that.selectionEnd = pos;
+				} else if (that.createTextRange) {
+					var r = that.createTextRange();
+					r.collapse(true);
+					r.move('character', caretPos);
+					r.select();
+				}
+			}
 			$(this).keydown(function(e){/* start keyDown event */
 				io = $.metadata ? $.extend({}, opts, iv.metadata()) : opts;/* build element specific options io = input options */
 				io.mDec = isNaN(io.mDec * 1) ? $('#' + io.mDec).val() * 1 : io.mDec * 1;/* sets decimal places */
@@ -146,10 +159,18 @@
 						return;
 					}	
 					if (caretPos < io.aSign.length && io.aSign !== '' && io.pSign == 'p' && inLength > 0){/* prevents numbers from being entered to the left of the currency sign when the currency symbol is on the left */
-						e.preventDefault();
+						if (io.wSign) { /* allows to enter digit on sign. move it at the beggin of number */
+							setCarretPos(io.aSign.length);
+						} else {
+							e.preventDefault();
+						}
 					}
 					if (caretPos > this.value.length - io.aSign.length && io.aSign !== '' && io.pSign == 's' && this.value !== ''){/* prevents numbers from being entered to the right of the currency sign when the currency symbol is on the right */
-						e.preventDefault();
+						if (io.wSign) { /* allows to enter digit on sign. move it at the end of number */
+							setCarretPos(this.value.length - io.aSign.length);
+						} else {
+							e.preventDefault();
+						}
 					}
 					if (caretPos == this.value.lastIndexOf('-')){/* prevents numbers from being entered to the left negative sign */
 						e.preventDefault();
@@ -504,6 +525,7 @@
 		aDec: '.',/* allowed decimal separator character */
 		aSign: '',/* allowed currency symbol */
 		pSign: 'p',/* placement of currency sign prefix or suffix */
+		wSign: false,/* allow to enter number placing cursor on sign */
 		mNum: 9,/* max number of numerical characters to the left of the decimal */
 		mDec: 2,/* max number of decimal places */
 		dGroup: 3,/* digital grouping for the thousand separator used in Format */
