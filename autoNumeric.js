@@ -59,7 +59,10 @@
 					r.select();
 				}
 			}
-			$(this).keydown(function(e){/* start keyDown event */
+			if ( io.aForm ) {
+				iv.autoNumericSet(iv.autoNumericGet(options), options);
+			}
+			iv.keydown(function(e){/* start keyDown event */
 				io = $.metadata ? $.extend({}, opts, iv.metadata()) : opts;/* build element specific options io = input options */
 				io.mDec = isNaN(io.mDec * 1) ? $('#' + io.mDec).val() * 1 : io.mDec * 1;/* sets decimal places */
 				cmdKey = false;
@@ -526,6 +529,7 @@
 		aSign: '',/* allowed currency symbol */
 		pSign: 'p',/* placement of currency sign prefix or suffix */
 		wSign: false,/* allow to enter number placing cursor on sign */
+		aForm: false,/* atomatically format value in form */
 		mNum: 9,/* max number of numerical characters to the left of the decimal */
 		mDec: 2,/* max number of decimal places */
 		dGroup: 3,/* digital grouping for the thousand separator used in Format */
