@@ -491,6 +491,12 @@
 		}
 		return autoGroup(iv, io);
 	};
+	$.fn.autoNumericGet = function(options){
+	    return $.fn.autoNumeric.Strip(this, options); 
+	};
+	$.fn.autoNumericSet = function(iv, options){
+	    return this.val($.fn.autoNumeric.Format(this, iv, options)); 
+	};
 	$.fn.autoNumeric.defaults = {/* plugin defaults */
 		aNum: '0123456789',/*  allowed  numeric values */
 		aNeg: '',/* allowed negative sign / character */
