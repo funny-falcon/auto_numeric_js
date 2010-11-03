@@ -271,7 +271,6 @@
 		return numCount;
 	}
 	function autoGroup(iv, io){/* private function that places the thousand separtor */
-		if (io.aSep !== ''){
 			var digitalGroup = '';
 			if (io.dGroup == 2){
 				digitalGroup = /(\d)((\d)(\d{2}?)+)$/;
@@ -285,14 +284,18 @@
 			for (k = 0; k < io.aSign.length; k++){/* clears the currency or other symbols and space */
 				iv = iv.replace(io.aSign.charAt(k), '').replace("\u00A0",'');
 			}
-			iv = iv.split(io.aSep).join('');/* removes the thousand sepparator */
+			if ( io.aSep ) {
+			  iv = iv.split(io.aSep).join('');/* removes the thousand sepparator */
+			}
 			var ivSplit = iv.split(io.aDec);/* splits the string at the decimal string */
 			if ( io.altDec && ivSplit.length == 1 ) {
 			    ivSplit = iv.split(io.altDec);
 			}
 			var s = ivSplit[0];/* assigns the whole number to the a varibale (s) */
-			while(digitalGroup.test(s)){ 
-				s = s.replace(digitalGroup, '$1'+io.aSep+'$2');/*  re-inserts the thousand sepparator via a regualer expression */
+			if ( io.aSep ) {
+				while(digitalGroup.test(s)){ 
+					s = s.replace(digitalGroup, '$1'+io.aSep+'$2');/*  re-inserts the thousand sepparator via a regualer expression */
+				}
 			}
 			if (io.mDec !== 0 && ivSplit.length > 1){ 
 				iv = s + io.aDec + ivSplit[1];/* joins the whole number with the deciaml value */
@@ -317,10 +320,6 @@
 			else {
 				return iv;
 			}
-		}
-		else {
-			return iv;
-		}
 	}
     function autoRound(iv, mDec, mRound, aPad){/* private function for round the number - please note this handled as text - Javascript math function can return inaccurate values */
 		iv = (iv === '') ? '0' : iv += ''; /* value to string */
@@ -460,7 +459,7 @@
 		if (io.aDec != '.'){
 			rePaste = rePaste.replace('.', io.aDec);/* replace the decimal point with the proper decimal separator */
 		}
-		if (rePaste !== '' && io.aSep !== ''){
+		if (rePaste !== ''){
 			rePaste = autoGroup(rePaste, io);/* calls the group function adds digital grouping */
 		}
 		iv.val(rePaste);
