@@ -189,7 +189,7 @@
 				/* if(kdCode == 110 && this.value.indexOf(io.aDec) == -1 && io.mDec > 0 && caretPos >= this.value.length - io.mDec && this.value.lastIndexOf(io.aSep) < caretPos && this.value.lastIndexOf('-') < caretPos){ //start modification for period key to enter a comma on numeric pad 
 					$(this).val(this.value.substring(0, caretPos) + io.aDec + this.value.substring(inLength, caretPos));
 				}*/
-				iv.val(autoGroup(this.value, io));/* adds the thousand sepparator */
+				this.value = autoGroup(this.value, io);/* adds the thousand sepparator */
 				var outLength = this.value.length;	
 				var decIndex = aDecIndex( this.value, io );
 				var hasDec = decIndex != -1;
@@ -285,9 +285,10 @@
 			else {
 				digitalGroup = /(\d)((\d{3}?)+)$/;
 			}
-			for (k = 0; k < io.aSign.length; k++){/* clears the currency or other symbols and space */
-				iv = iv.replace(io.aSign.charAt(k), '').replace("\u00A0",'');
+			if ( io.aSign ) {
+			  iv = iv.replace(io.aSign, ''); /* clears the currency */
 			}
+			iv = iv.replace("\u00A0",'');/* clears the currency or other symbols and space */
 			if ( io.aSep ) {
 			  iv = iv.split(io.aSep).join('');/* removes the thousand sepparator */
 			}
