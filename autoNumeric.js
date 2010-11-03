@@ -32,12 +32,10 @@
  */
 (function($) {
 	$.fn.autoNumeric = function(options) {
-		var opts = $.extend({}, $.fn.autoNumeric.defaults, options);/* build main options before element iteration */
 		return this.each(function() {/* iterate and reformat each matched element */
 			var iv = $(this);/* check input value iv */
 			var ii = this.id;/* input ID */
-			var io = $.metadata ? $.extend({}, opts, iv.metadata()) : opts;/* build element specific options io = input options */
-			io.mDec = isNaN(io.mDec * 1) ? $('#' + io.mDec).val() * 1 : io.mDec * 1;/* sets decimal places */
+			var io = autoCode(iv, options);
 			var kdCode = '';/* Key down Code */
 			var selectLength = 0;/* length of input selected */
 			var caretPos = 0;/* caret poistion */
@@ -64,8 +62,7 @@
 				iv.autoNumericSet(iv.autoNumericGet(options), options);
 			}
 			iv.keydown(function(e){/* start keyDown event */
-				io = $.metadata ? $.extend({}, opts, iv.metadata()) : opts;/* build element specific options io = input options */
-				io.mDec = isNaN(io.mDec * 1) ? $('#' + io.mDec).val() * 1 : io.mDec * 1;/* sets decimal places */
+				io = autoCode(iv, options);
 				cmdKey = false;
 				if (!e){/* routine for key  codes on key down */
 					e = window.event;
@@ -256,6 +253,16 @@
 		  obj = '#' + obj.replace(/(:|\.)/g,'\\$1'); 
 		}
 		return $(obj);
+	}
+	function autoCode($this, options){ // function to update the defaults settings
+		var opts = $.extend({}, options);
+		if ( $.metadata ) {
+			opts = $.extend(opts, $this.metadata());/* consider declared metadata on input */
+		}
+		if ( opts.mDec ) {
+			opts.mDec = isNaN(opts.mDec * 1) ? $('#' + opts.mDec).val() * 1 : opts.mDec * 1;/* sets decimal places */
+		}
+		return $.extend({}, $.fn.autoNumeric.defaults, opts);
 	}
 	function autoCount(str, start, end){/* private function that counts the numeric characters to the left and right of the decimal point */
 		var chr = '';
@@ -458,9 +465,7 @@
 		return false;
 	}
 	$.fn.autoNumeric.Strip = function(ii, options){/* public function that stripes the format and converts decimal seperator to a period */
-		var opts = $.extend({}, $.fn.autoNumeric.defaults, options);
-		var io = $.metadata ? $.extend({}, opts, autoGet(ii).metadata()) : opts;
-		io.mDec = isNaN(io.mDec * 1) ? $('#' + io.mDec).val() * 1 : io.mDec * 1;/* decimal places */
+		var io = autoCode(autoGet(ii), options);
 		var iv = autoGet(ii).val();
 		iv = iv.replace(io.aSign, '').replace('\u00A0','');
 		var reg = new RegExp('[^'+'\\-'+io.aNum+io.aDec+']','gi');/* regular expreession constructor */
@@ -482,9 +487,7 @@
 	};
 	$.fn.autoNumeric.Format = function(ii, iv, options){/* public function that recieves a numeric string and formats to the target input field */
 		iv += '';/* to string */
-		var opts = $.extend({}, $.fn.autoNumeric.defaults, options);
-		var io = $.metadata ? $.extend({}, opts, autoGet(ii).metadata()) : opts;
-		io.mDec = isNaN(io.mDec * 1) ? $('#' + io.mDec).val() * 1 : io.mDec * 1;/* decimal places */
+		var io = autoCode(autoGet(ii), options);
         iv = autoRound(iv, io.mDec, io.mRound, io.aPad);
 		var nNeg = 0;
 		if (iv.indexOf('-') != -1 && io.aNeg === ''){/* deletes negative symbol */
