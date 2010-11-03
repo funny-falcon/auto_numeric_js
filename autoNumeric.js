@@ -48,6 +48,7 @@
 			var cmdKey = false;/* MAC command ket pressed */
 			var setCarretPos = function(pos){
 				var that = iv[0];
+				that.focus();
 				caretPos = pos;
 				if ( that.selectionStart || that.selectionStart == '0') {
 					that.selectionStart = pos;
@@ -241,19 +242,7 @@
 						setCaret = (caretPos + 1);
 					}
 				}/*  ends - determines the new caret position  */
-				var iField = this;/* start - set caret position */
-				iField.focus();
-				if (document.selection) {
-					var iRange = iField.createTextRange();
-					iRange.collapse(true);
-					iRange.moveStart("character", setCaret);
-					iRange.moveEnd("character", 0);
-					iRange.select();
-				}
-				else if (iField.selectionStart || iField.selectionStart == '0') {
-					iField.selectionStart = setCaret;
-					iField.selectionEnd = setCaret;
-				}/* end - set caret position */ 
+				setCarretPos(setCaret);
 			}).bind('change focusout', function(){/* start change - thanks to Javier P. corrected the inline onChange event  added focusout version 1.55*/
 				if (iv.val() !== ''){
 					autoCheck(iv, io);
