@@ -44,6 +44,7 @@
 			var numLeft = 0;/* number of numeric characters to the left of the decimal point */
 			var numRight = 0;/* number of numeric characters to the right of the decimal point */
 			var cmdKey = false;/* MAC command ket pressed */
+			var keyDown = false;
 			var setCarretPos = function(pos){
 				var that = iv[0];
 				that.focus();
@@ -88,6 +89,7 @@
 					caretPos = this.selectionStart * 1;
 				}/* end caret position routine */
 				inLength = this.value.length;/* pass string length to keypress event for value left & right of the decimal position & keyUp event to set caret position */
+				keyDown = true;
 			}).keypress(function(e){/* start keypress  event*/
 				var allowed = io.aNum + io.aNeg + io.aDec;/* sets allowed input, number, negitive sign and decimal seperator */
 				charLeft = (this.value.lastIndexOf(io.aDec) == -1) ? inLength : inLength - (inLength - this.value.lastIndexOf(io.aDec));/* characters to the left of the decimal point */
@@ -184,6 +186,10 @@
 					}					
 				}/* end rules for number key press  */
 			}).keyup(function(e){/* start keyup event routine */
+				if ( !keyDown ) { /* fix strange bug of double keyup */
+					return;
+				}
+				keyDown = false;
 				if (this.value === '') { /* Fix to let you delete what is in the textbox without it adding padded zeroes - bcull - 6 Sep 2010 */
 					return;
 				}
