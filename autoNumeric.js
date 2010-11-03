@@ -199,20 +199,7 @@
 				}
 				if (inLength > outLength){ /* new caret position when a number(s) or decimal character(s) has been deleted */
 					if(selectLength === 0){
-						if((inLength - 2) == outLength){/* when two caracters one numeric and one thosand seperator have been deleted */
-							if(kdCode == 8){/* back space key pressed */
-								setCaret = (caretPos - 2);
-							}
-							else if(kdCode == 46){/* delete key pressed */
-								setCaret = caretPos;
-							}
-							else{
-								setCaret = (caretPos - 1);
-							}	
-						}
-						else{/* back space key pressed */
-							setCaret = (kdCode == 8) ? caretPos - 1 : caretPos;
-						}
+						setCaret = (kdCode == 8) ? caretPos - (inLength - outLength) : caretPos;
 					}
 					if(selectLength > 0 && selectLength < inLength){/* when multiple characters but not all are deleted */
 						setCaret = (outLength - (inLength - (caretPos + selectLength)));
