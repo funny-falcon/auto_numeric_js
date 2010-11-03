@@ -168,7 +168,11 @@
 						e.preventDefault();
 					}
 					if (hasDec && caretPos >= charLeft + 1 && numRight >= io.mDec){/* checks for max numeric characters to the left and right of the decimal point */
-						e.preventDefault();
+						if ( caretPos < charLeft + 1 + numRight ) { 
+							caretPos = caretPos + 1;
+						} else {
+							e.preventDefault();
+						}
 					}					
 				}/* end rules for number key press  */
 			}).keyup(function(e){/* start keyup event routine */
@@ -297,7 +301,10 @@
 					s = s.replace(digitalGroup, '$1'+io.aSep+'$2');/*  re-inserts the thousand sepparator via a regualer expression */
 				}
 			}
-			if (io.mDec !== 0 && ivSplit.length > 1){ 
+			if (io.mDec !== 0 && ivSplit.length > 1){
+			    if ( ivSplit[1].length > io.mDec ) {
+			        ivSplit[1] = ivSplit[1].substring(0, io.mDec);
+			    }
 				iv = s + io.aDec + ivSplit[1];/* joins the whole number with the deciaml value */
 			}
 			else {
