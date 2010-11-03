@@ -84,6 +84,7 @@
 				keyDown = true;
 			}).keypress(function(e){/* start keypress  event*/
 				var allowed = io.aNum + io.aNeg + io.aDec;/* sets allowed input, number, negitive sign and decimal seperator */
+				if (io.altDec) { allowed = allowed + io.altDec; }
 				var decIndex = aDecIndex( this.value, io );
 				var hasDec = decIndex != -1;
 				charLeft = !hasDec ? inLength : decIndex;/* characters to the left of the decimal point */
@@ -102,7 +103,7 @@
 				if (allowed.indexOf(cCode) == -1){/* checks for allowed characters */
 					e.preventDefault();
 				}
-				if (cCode == io.aDec){/* start rules when the decimal charactor key is pressed */
+				if (cCode == io.aDec || (io.altDec && cCode == io.altDec) ){/* start rules when the decimal charactor key is pressed */
 					if (selectLength == inLength && selectLength > 0){/* allows the selected input to be replaced with a number - Thanks Bart V. */
 						return;
 					}					
@@ -242,7 +243,15 @@
 		if ( opts.mDec ) {
 			opts.mDec = isNaN(opts.mDec * 1) ? $('#' + opts.mDec).val() * 1 : opts.mDec * 1;/* sets decimal places */
 		}
-		return $.extend({}, $.fn.autoNumeric.defaults, opts);
+		opts = $.extend({}, $.fn.autoNumeric.defaults, opts);
+		if ( opts.altDec === null && opts.mDec > 0 ) {
+			if ( opts.aDec == '.' && opts.aSep != ',' ) {
+				opts.altDec = ',';
+			} else if ( opts.aDec == ',' && opts.aSep != '.' ) {
+				opts.altDec = '.';
+			}
+		}
+		return opts;
 	}
 	function aDecIndex(value, io) { /* checks value on digit character */
 		if (io.aSign.indexOf(io.aDec) != -1 && io.pSign == 's') { /* allow a dot in suffix sign */
@@ -278,6 +287,9 @@
 			}
 			iv = iv.split(io.aSep).join('');/* removes the thousand sepparator */
 			var ivSplit = iv.split(io.aDec);/* splits the string at the decimal string */
+			if ( io.altDec && ivSplit.length == 1 ) {
+			    ivSplit = iv.split(io.altDec);
+			}
 			var s = ivSplit[0];/* assigns the whole number to the a varibale (s) */
 			while(digitalGroup.test(s)){ 
 				s = s.replace(digitalGroup, '$1'+io.aSep+'$2');/*  re-inserts the thousand sepparator via a regualer expression */
@@ -400,6 +412,9 @@
 			return;
 		}
 		val = val.replace(io.aSign, '');
+		if (io.altDec) {
+		    val = val.replace(io.altDec, io.aDec);
+		}
 		var eNeg = '';
 		if (io.aNeg == '-'){/* escape the negative sign */
 			eNeg = '\\-';
@@ -505,6 +520,7 @@
 		aNeg: '',/* allowed negative sign / character */
 		aSep: ',',/* allowed thousand separator character */
 		aDec: '.',/* allowed decimal separator character */
+		altDec: null,/* allow to replace alternative dec */
 		aSign: '',/* allowed currency symbol */
 		pSign: 'p',/* placement of currency sign prefix or suffix */
 		wSign: false,/* allow to enter number placing cursor on sign */
