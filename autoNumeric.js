@@ -65,15 +65,7 @@
 			iv.keydown(function(e){/* start keyDown event */
 				io = autoCode(iv, options);
 				cmdKey = false;
-				if (!e){/* routine for key  codes on key down */
-					e = window.event;
-				}
-				if (e.keyCode){/* IE support */
-					kdCode = e.keyCode;
-				}
-				else if (e.which){/* FF & O support */
-					kdCode = e.which;
-				}
+				kdCode = e.which;
 				if(e.metaKey){/* tests for Mac command key being pressed down thanks Bart B. for bring to my attention */
 					cmdKey = true;
 				}
@@ -103,16 +95,7 @@
 				if (kdCode == 8 || kdCode == 9 || kdCode == 13 || kdCode == 35 || kdCode == 36 || kdCode == 37 || kdCode == 39 || kdCode == 46){/* allows the backspace (8), tab (9), enter 13, end (35), home(36), left(37) and right(39) arrows key  delete key (46) to function in some browsers (FF & O) - Thanks to Bart Bons on the return key */
 					return true;
 				}
-				var kpCode = '';/* Key Press Code */
-				if (!e){/* routine for key  codes on key down */
-					e = window.event;
-				}
-				if (e.keyCode){/* IE */
-					kpCode = e.keyCode;
-				}
-				else if (e.which){/* FF & O */
-					kpCode = e.which;
-				}
+				var kpCode = e.which;
 				var cCode = String.fromCharCode(kpCode);/* Character code*/
 				if (allowed.indexOf(cCode) == -1){/* checks for allowed characters */
 					e.preventDefault();
