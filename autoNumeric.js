@@ -84,9 +84,11 @@
 				keyDown = true;
 			}).keypress(function(e){/* start keypress  event*/
 				var allowed = io.aNum + io.aNeg + io.aDec;/* sets allowed input, number, negitive sign and decimal seperator */
-				charLeft = (this.value.lastIndexOf(io.aDec) == -1) ? inLength : inLength - (inLength - this.value.lastIndexOf(io.aDec));/* characters to the left of the decimal point */
+				var decIndex = aDecIndex( this.value, io );
+				var hasDec = decIndex != -1;
+				charLeft = !hasDec ? inLength : decIndex;/* characters to the left of the decimal point */
 				numLeft = autoCount(this.value, 0, charLeft);/* the number of intergers to the left of the decimal point */
-				if (this.value.lastIndexOf(io.aDec) != -1){
+				if (hasDec){
 					numRight = autoCount(this.value, charLeft, inLength);/* the number of intergers to the right of the decimal point */
 				}
 				if ((e.ctrlKey || cmdKey) && (kdCode == 65 || kdCode == 67 || kdCode == 86 || kdCode == 88)){/* allows controll key & select all (v=65) Thanks Jonas Johansson, copy(c=67), past (v=86), cut (v=88)  */
@@ -104,7 +106,7 @@
 					if (selectLength == inLength && selectLength > 0){/* allows the selected input to be replaced with a number - Thanks Bart V. */
 						return;
 					}					
-					if(caretPos <= this.value.lastIndexOf('-') || this.value.indexOf(io.aDec) != -1 || io.mDec === 0){/* prevents the decimal decimal character from being enetered left of the negitive symbol  */
+					if(caretPos <= this.value.lastIndexOf('-') || hasDec || io.mDec === 0){/* prevents the decimal decimal character from being enetered left of the negitive symbol  */
 						e.preventDefault();
 					}
 					if(caretPos <= this.value.lastIndexOf(io.aSep) && this.value.lastIndexOf(io.aSep) != -1 && io.aSep !== ''){/* prevents the decimal charactor from being entered to the left of a thousand separator */
@@ -164,7 +166,7 @@
 					if (numLeft >= io.mNum && caretPos <= charLeft){/* checks for max numeric characters to the left of the decimal point */
 						e.preventDefault();
 					}
-					if (this.value.indexOf(io.aDec) != -1 && caretPos >= charLeft + 1 && numRight >= io.mDec){/* checks for max numeric characters to the left and right of the decimal point */
+					if (hasDec && caretPos >= charLeft + 1 && numRight >= io.mDec){/* checks for max numeric characters to the left and right of the decimal point */
 						e.preventDefault();
 					}					
 				}/* end rules for number key press  */
@@ -184,7 +186,9 @@
 				}*/
 				iv.val(autoGroup(this.value, io));/* adds the thousand sepparator */
 				var outLength = this.value.length;	
-				charLeft = (this.value.lastIndexOf(io.aDec) == -1) ? outLength : outLength - (outLength - this.value.lastIndexOf(io.aDec));
+				var decIndex = aDecIndex( this.value, io );
+				var hasDec = decIndex != -1;
+				charLeft = !hasDec ? outLength : decIndex;
 				numLeft = autoCount(this.value, 0, charLeft);/* the number of intergers to the left of the decimal point */
 				if (numLeft > io.mNum){/* if max number of characters are exceeeded */
 					iv.val('');
@@ -252,6 +256,12 @@
 			opts.mDec = isNaN(opts.mDec * 1) ? $('#' + opts.mDec).val() * 1 : opts.mDec * 1;/* sets decimal places */
 		}
 		return $.extend({}, $.fn.autoNumeric.defaults, opts);
+	}
+	function aDecIndex(value, io) { /* checks value on digit character */
+		if (io.aSign.indexOf(io.aDec) != -1 && io.pSign == 's') { /* allow a dot in suffix sign */
+			value = value.replace(io.aSign, '');
+		}
+		return value.indexOf(io.aDec);
 	}
 	function autoCount(str, start, end){/* private function that counts the numeric characters to the left and right of the decimal point */
 		var chr = '';
@@ -402,6 +412,7 @@
 			iv.val('');
 			return;
 		}
+		val = val.replace(io.aSign, '');
 		var eNeg = '';
 		if (io.aNeg == '-'){/* escape the negative sign */
 			eNeg = '\\-';
