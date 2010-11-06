@@ -4,19 +4,27 @@ require 'haml'
 require 'sinatra'
 require "sinatra/reloader"
 
+reload_n = 0
+
 template :index do
 <<-EOF
 !!!
 %html
 	%head
 		%script(type="text/javascript" src='jquery-1.4.3.js')
-		%script(type="text/javascript" src='autoNumeric.js')
+		%script(type="text/javascript" src='autoNumeric.js?#{reload_n+=1}')
 		:css
 			#number {text-align: right}
 			label {display: block}
+			#log {font-size: 85%; line-height: 1em;}
+			#log span {display: block}
 		:javascript
 			function log(str) {
-				$('#log').append('<span>'+str+'</span><br/>');
+				var spans = $('#log span');
+				for(i=0; i<spans.length - 20; i++){
+					$(spans[i]).remove();
+				}
+				$('#log').append('<span>'+str+'</span>');
 			}
 	%body
 		%form(method="post")
@@ -36,6 +44,7 @@ template :index do
 			function applyMeta(){
 				var meta = $('#meta').val();
 				meta = eval("("+meta+")");
+				$('#log').html('');
 				$('#number').autoNumeric(meta);
 				eval($('#js').val());
 			}
