@@ -30,7 +30,38 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+
 (function($) {
+	function getElementSelection(that) {
+		var position = {};
+		if ( that.selectionStart === undefined ) { /* IE Support to find the caret position */
+			that.focus();
+			var select = document.selection.createRange();
+			position.length = select.text.length;
+			select.moveStart('character', -that.value.length);
+			position.end   = select.text.length;
+			position.start = position.end - position.length;
+		} else {
+			position.start = that.selectionStart;
+			position.end   = that.selectionEnd;
+			position.length= position.end - position.start;
+		}
+		return position;
+	}
+	
+	function setCarretPosition(that, pos){
+		if ( that.selectionStart === undefined ) {
+			that.focus();
+			var r = that.createTextRange();
+			r.collapse(true);
+			r.move('character', pos);
+			r.select();
+		} else {
+			that.selectionStart = pos;
+			that.selectionEnd = pos;
+		}
+	}
+	
 	$.fn.autoNumeric = function(options) {
 		return this.each(function() {/* iterate and reformat each matched element */
 			var iv = $(this);/* check input value iv */
@@ -45,20 +76,6 @@
 			var numRight = 0;/* number of numeric characters to the right of the decimal point */
 			var cmdKey = false;/* MAC command ket pressed */
 			var keyDown = false;
-			var setCarretPos = function(pos){
-				var that = iv[0];
-				that.focus();
-				caretPos = pos;
-				if ( that.selectionStart || that.selectionStart == '0') {
-					that.selectionStart = pos;
-					that.selectionEnd = pos;
-				} else if (that.createTextRange) {
-					var r = that.createTextRange();
-					r.collapse(true);
-					r.move('character', caretPos);
-					r.select();
-				}
-			}
 			if ( io.aForm ) {
 				iv.autoNumericSet(iv.autoNumericGet(options), options);
 			}
@@ -69,17 +86,9 @@
 				if(e.metaKey){/* tests for Mac command key being pressed down thanks Bart B. for bring to my attention */
 					cmdKey = true;
 				}
-				if (document.selection){/* IE Support to find the caret position */
-					this.focus();
-					var select = document.selection.createRange();
-					selectLength = document.selection.createRange().text.length;
-					select.moveStart('character', -this.value.length);
-					caretPos = (select.text.length - selectLength) * 1;
-				}
-				else if (this.selectionStart || this.selectionStart == '0'){/* Firefox support  to find the caret position */
-					selectLength = this.selectionEnd * 1 - this.selectionStart * 1;
-					caretPos = this.selectionStart * 1;
-				}/* end caret position routine */
+				var selection = getElementSelection(iv[0]);
+				selectLength = selection.length;
+				caretPos = selection.start;
 				inLength = this.value.length;/* pass string length to keypress event for value left & right of the decimal position & keyUp event to set caret position */
 				keyDown = true;
 			}).keypress(function(e){/* start keypress  event*/
@@ -149,14 +158,14 @@
 					}	
 					if (caretPos < io.aSign.length && io.aSign !== '' && io.pSign == 'p' && inLength > 0){/* prevents numbers from being entered to the left of the currency sign when the currency symbol is on the left */
 						if (io.wSign) { /* allows to enter digit on sign. move it at the beggin of number */
-							setCarretPos(io.aSign.length);
+							setCarretPosition(this, io.aSign.length);
 						} else {
 							e.preventDefault();
 						}
 					}
 					if (caretPos > this.value.length - io.aSign.length && io.aSign !== '' && io.pSign == 's' && this.value !== ''){/* prevents numbers from being entered to the right of the currency sign when the currency symbol is on the right */
 						if (io.wSign) { /* allows to enter digit on sign. move it at the end of number */
-							setCarretPos(this.value.length - io.aSign.length);
+							setCarretPosition(this, this.value.length - io.aSign.length);
 						} else {
 							e.preventDefault();
 						}
@@ -224,7 +233,7 @@
 						setCaret = (caretPos + 1);
 					}
 				}/*  ends - determines the new caret position  */
-				setCarretPos(setCaret);
+				setCarretPosition(this, setCaret);
 			}).bind('change focusout', function(){/* start change - thanks to Javier P. corrected the inline onChange event  added focusout version 1.55*/
 				if (iv.val() !== ''){
 					autoCheck(iv, io);
