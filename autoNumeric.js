@@ -49,205 +49,24 @@
 		return position;
 	}
 	
-	function setCarretPosition(that, pos){
+	function setElementSelection(that, start, end){
 		if ( that.selectionStart === undefined ) {
 			that.focus();
 			var r = that.createTextRange();
 			r.collapse(true);
-			r.move('character', pos);
+			r.moveEnd(  'character', end);
+			r.moveStart('character', start);
 			r.select();
 		} else {
-			that.selectionStart = pos;
-			that.selectionEnd = pos;
+			that.selectionStart = start;
+			that.selectionEnd = end;
 		}
 	}
 	
-	$.fn.autoNumeric = function(options) {
-		return this.each(function() {/* iterate and reformat each matched element */
-			var iv = $(this);/* check input value iv */
-			var ii = this.id;/* input ID */
-			var io = autoCode(iv, options);
-			var kdCode = '';/* Key down Code */
-			var selectLength = 0;/* length of input selected */
-			var caretPos = 0;/* caret poistion */
-			var inLength = 0;/* length prior to keypress event */
-			var charLeft = 0;/* number of characters to the left of the decimal point */
-			var numLeft = 0;/* number of numeric characters to the left of the decimal point */
-			var numRight = 0;/* number of numeric characters to the right of the decimal point */
-			var cmdKey = false;/* MAC command ket pressed */
-			var keyDown = false;
-			if ( io.aForm ) {
-				iv.autoNumericSet(iv.autoNumericGet(options), options);
-			}
-			iv.keydown(function(e){/* start keyDown event */
-				io = autoCode(iv, options);
-				cmdKey = false;
-				kdCode = e.which;
-				if(e.metaKey){/* tests for Mac command key being pressed down thanks Bart B. for bring to my attention */
-					cmdKey = true;
-				}
-				var selection = getElementSelection(iv[0]);
-				selectLength = selection.length;
-				caretPos = selection.start;
-				inLength = this.value.length;/* pass string length to keypress event for value left & right of the decimal position & keyUp event to set caret position */
-				keyDown = true;
-			}).keypress(function(e){/* start keypress  event*/
-				var allowed = io.aNum + io.aNeg + io.aDec;/* sets allowed input, number, negitive sign and decimal seperator */
-				if (io.altDec) { allowed = allowed + io.altDec; }
-				var decIndex = aDecIndex( this.value, io );
-				var hasDec = decIndex != -1;
-				charLeft = !hasDec ? inLength : decIndex;/* characters to the left of the decimal point */
-				numLeft = autoCount(this.value, 0, charLeft);/* the number of intergers to the left of the decimal point */
-				if (hasDec){
-					numRight = autoCount(this.value, charLeft, inLength);/* the number of intergers to the right of the decimal point */
-				}
-				if ((e.ctrlKey || cmdKey) && (kdCode == 65 || kdCode == 67 || kdCode == 86 || kdCode == 88)){/* allows controll key & select all (v=65) Thanks Jonas Johansson, copy(c=67), past (v=86), cut (v=88)  */
-					return true;
-				}
-				if (kdCode == 8 || kdCode == 9 || kdCode == 13 || kdCode == 35 || kdCode == 36 || kdCode == 37 || kdCode == 39 || kdCode == 46){/* allows the backspace (8), tab (9), enter 13, end (35), home(36), left(37) and right(39) arrows key  delete key (46) to function in some browsers (FF & O) - Thanks to Bart Bons on the return key */
-					return true;
-				}
-				var kpCode = e.which;
-				var cCode = String.fromCharCode(kpCode);/* Character code*/
-				if (allowed.indexOf(cCode) == -1){/* checks for allowed characters */
-					e.preventDefault();
-				}
-				if (cCode == io.aDec || (io.altDec && cCode == io.altDec) ){/* start rules when the decimal charactor key is pressed */
-					if (selectLength == inLength && selectLength > 0){/* allows the selected input to be replaced with a number - Thanks Bart V. */
-						return;
-					}					
-					if(caretPos <= this.value.lastIndexOf('-') || hasDec || io.mDec === 0){/* prevents the decimal decimal character from being enetered left of the negitive symbol  */
-						e.preventDefault();
-					}
-					if(caretPos <= this.value.lastIndexOf(io.aSep) && this.value.lastIndexOf(io.aSep) != -1 && io.aSep !== ''){/* prevents the decimal charactor from being entered to the left of a thousand separator */
-						if(io.pSign == 's' && io.aSign.indexOf(' ') >= 0){/* rules when the curency symbol has a space character and is placed as a suffix and the thousand separator is also a space */
-							var subStr = this.value.substring(0, this.value.length - io.aSign.length);
-							var subStrPos = subStr.lastIndexOf(' ');
-							if(caretPos > subStrPos && caretPos >= subStr.length - io.mDec){
-								return;
-							}
-							else {
-								e.preventDefault();
-							}							
-						}
-						else {
-							e.preventDefault();
-						}	
-					}
-					if(io.aSign === '' && caretPos < this.value.length - io.mDec){/* decimal placement & accuracy with no currency symbol */
-						e.preventDefault();
-					}
-					if(io.aSign !== '' && io.pSign == 'p' && (this.value.length - caretPos > io.mDec || caretPos < io.aSign.length)){/* decimal placement & accuracy with with currency symbol as prefix */
-						e.preventDefault();
-					}
-					if(io.aSign !== '' && io.pSign == 's' && (caretPos > this.value.length - io.aSign.length || caretPos < this.value.length - (io.aSign.length + io.mDec))){/* decimal placement & accuracy with with currency symbol as suffix */
-						e.preventDefault();					
-					}					
-				}/*  end rules when the decimal charactor key is pressed */
-				if (kpCode == 45 && (caretPos > 0 || this.value.indexOf('-') != -1 || io.aNeg === '')){/* start rules when the negative key pressed */ 
-					if (selectLength >= 1 && caretPos === 0){/* allows the selected input to be replaced with a number - Thanks Bart V.  */
-						return;
-					}
-					else{
-						e.preventDefault();
-					}
-				}/* end rules when the negative key pressed */
-				if (kpCode >= 48 && kpCode <= 57){/* start rules for number key press */ 
-					if (selectLength > 0){/* allows the selected input to be replaced with a number - Thanks Bart V. */
-						return;
-					}	
-					if (caretPos < io.aSign.length && io.aSign !== '' && io.pSign == 'p' && inLength > 0){/* prevents numbers from being entered to the left of the currency sign when the currency symbol is on the left */
-						if (io.wSign) { /* allows to enter digit on sign. move it at the beggin of number */
-							setCarretPosition(this, io.aSign.length);
-						} else {
-							e.preventDefault();
-						}
-					}
-					if (caretPos > this.value.length - io.aSign.length && io.aSign !== '' && io.pSign == 's' && this.value !== ''){/* prevents numbers from being entered to the right of the currency sign when the currency symbol is on the right */
-						if (io.wSign) { /* allows to enter digit on sign. move it at the end of number */
-							setCarretPosition(this, this.value.length - io.aSign.length);
-						} else {
-							e.preventDefault();
-						}
-					}
-					if (caretPos == this.value.lastIndexOf('-')){/* prevents numbers from being entered to the left negative sign */
-						e.preventDefault();
-					}
-					if (numLeft >= io.mNum && caretPos <= charLeft){/* checks for max numeric characters to the left of the decimal point */
-						e.preventDefault();
-					}
-					if (hasDec && caretPos >= charLeft + 1 && numRight >= io.mDec){/* checks for max numeric characters to the left and right of the decimal point */
-						if ( caretPos < charLeft + 1 + numRight ) { 
-							caretPos = caretPos + 1;
-						} else {
-							e.preventDefault();
-						}
-					}					
-				}/* end rules for number key press  */
-			}).keyup(function(e){/* start keyup event routine */
-				if ( !keyDown ) { /* fix strange bug of double keyup */
-					return;
-				}
-				keyDown = false;
-				if (this.value === '') { /* Fix to let you delete what is in the textbox without it adding padded zeroes - bcull - 6 Sep 2010 */
-					return;
-				}
-				if (io.aSep === '' || e.keyCode == 9 || e.keyCode == 20 || e.keyCode == 35 || e.keyCode == 36 || e.keyCode == 37 || e.keyCode == 39 || kdCode == 9 || kdCode == 13 || kdCode == 20 || kdCode == 35 || kdCode == 36 || kdCode == 37 || kdCode == 39){/* allows the tab(9), end(35), home(36) left(37) & right(39) arrows and when there is no thousand separator to bypass the autoGroup function  */
-					return;/* key codes 35 & 36 Home and end keys fix thanks to JPM USA  */
-				}
-				/* if(kdCode == 110 && this.value.indexOf(io.aDec) == -1 && io.mDec > 0 && caretPos >= this.value.length - io.mDec && this.value.lastIndexOf(io.aSep) < caretPos && this.value.lastIndexOf('-') < caretPos){ //start modification for period key to enter a comma on numeric pad 
-					$(this).val(this.value.substring(0, caretPos) + io.aDec + this.value.substring(inLength, caretPos));
-				}*/
-				this.value = autoGroup(this.value, io);/* adds the thousand sepparator */
-				var outLength = this.value.length;	
-				var decIndex = aDecIndex( this.value, io );
-				var hasDec = decIndex != -1;
-				charLeft = !hasDec ? outLength : decIndex;
-				numLeft = autoCount(this.value, 0, charLeft);/* the number of intergers to the left of the decimal point */
-				if (numLeft > io.mNum){/* if max number of characters are exceeeded */
-					iv.val('');
-				}	
-				var setCaret = 0;/* start - determines the new caret position  */
-				if (inLength < outLength){/* new caret position when a number or decimal character has been added */
-					setCaret = (outLength == io.aSign.length + 1 && io.pSign == 's') ? 1 : caretPos + (outLength - inLength);
-				}
-				if (inLength > outLength){ /* new caret position when a number(s) or decimal character(s) has been deleted */
-					if(selectLength === 0){
-						setCaret = (kdCode == 8) ? caretPos - (inLength - outLength) : caretPos;
-					}
-					if(selectLength > 0 && selectLength < inLength){/* when multiple characters but not all are deleted */
-						setCaret = (outLength - (inLength - (caretPos + selectLength)));
-					}
-					if(selectLength == inLength){/* when multiple characters but not all are deleted */
-						setCaret = (outLength == io.aSign.length + 1 && io.pSign == 's') ? 1 : 1 + io.aSign.length;
-					}					
-				} 
-				if (inLength == outLength){/* new caret position when a and equal aount of characters have been added as the amount deleted */
-					if(selectLength >= 0){
-						setCaret = caretPos + selectLength;
-					}
-					if(this.value.charAt(caretPos - 1) == io.aSep && kdCode == 8){/* moves caret to the left when trying to delete thousand separartor via the backspace key */
-						setCaret = (caretPos - 1);
-					}
-					else if(this.value.charAt(caretPos) == io.aSep && kdCode == 46){/* moves caret to the right when trying to delete thousand separartor via the delete key */
-						setCaret = (caretPos + 1);
-					}
-				}/*  ends - determines the new caret position  */
-				setCarretPosition(this, setCaret);
-			}).bind('change focusout', function(){/* start change - thanks to Javier P. corrected the inline onChange event  added focusout version 1.55*/
-				if (iv.val() !== ''){
-					autoCheck(iv, io);
-				}		
-			}).bind('paste', function(){setTimeout(function(){autoCheck(iv, io);}, 0); });/* thanks to Josh of Digitalbush.com Opera does not fire paste event*/
-		});
-	};
-	function autoGet(obj) {/* thanks to Anthony & Evan C */
-	    if (typeof(obj) == 'string') {
-		  obj = obj.replace(/\[/g, "\\[").replace(/\]/g, "\\]");
-		  obj = '#' + obj.replace(/(:|\.)/g,'\\$1'); 
-		}
-		return $(obj);
+	function setCarretPosition(that, pos){
+		setElementSelection(that, pos, pos);
 	}
+	
 	function autoCode($this, options){ // function to update the defaults settings
 		var opts = $.extend({}, options);
 		if ( $.metadata ) {
@@ -266,6 +85,300 @@
 		}
 		return opts;
 	}
+	
+	var autoNumericHolder = function(that, options){
+		this.options = options;
+		this.that = that;
+		this.$that = $(that);
+		this.formatted = false;
+		this.io = autoCode(this.$that, this.options);
+	}
+	
+	$.extend(autoNumericHolder.prototype, {
+		init: function(e){
+			var that = this.that;
+			var io = autoCode(this.$that, this.options);
+			this.value = this.that.value;
+			this.io = io;
+			this.allowed = io.aNum + io.aDec + io.aNeg;
+			if ( io.altDec ) { this.allowed += io.altDec; }
+			this.cmdKey = e.metaKey;
+			this.shiftKey = e.shiftKey;
+			this.selection = getElementSelection(this.that);
+			if ( e.type == 'keydown' || e.type == 'keyup' || e.which == 0 ) {
+				this.kdCode = e.keyCode;
+			} else {
+				this.kdCode = 0;
+			}
+			this.which = e.which;
+			this.hasNeg = io.aNeg && that.value && that.value.charAt(0) == '-';
+			this.processed = false;
+			this.prevent = false;
+		},
+		setSelection: function(start, end, setReal) {
+			start = Math.max(start, 0);
+			end = Math.min(end, this.that.value.length);
+			this.selection = { start: start, end: end, length: end - start };
+			if ( setReal === undefined || setReal ) { setElementSelection( this.that, start, end ); }
+		},
+		setPosition: function(pos, setReal) {
+			this.setSelection(pos, pos, setReal);
+		},
+		getBeforeAfterStriped: function() {
+			var value = this.value;
+			var io = this.io;
+			var allowed = io.aNum + io.aDec + io.aNeg;
+			var reg = new RegExp('[^' + allowed + ']','gi'); /* remove any uninterested characters */
+			var left = value.substring(0, this.selection.start).replace(io.aSign,'').replace(reg, '');
+			var right = value.substring(this.selection.end, value.length).replace(io.aSign,'').replace(reg, '');
+			return [left, right];
+		},
+		signPosition: function() {
+			if ( this.io.aSign ) {
+				if ( this.io.pSign == 'p' ) {
+					return this.hasNeg ? [1, this.io.aSign.length + 1] : [0, this.io.aSign.length];
+				} else {
+					return [this.that.value.length - this.io.aSign.length, this.that.value.length] 
+				}
+			} else {
+				return [1000, -1];
+			}
+		},
+		/* if selection touches sign, expand it to cover whole sign */
+		expandSelectionOnSign: function(setReal) {
+			var sign_position = this.signPosition();
+			if ( this.selection.start < sign_position[1] && this.selection.end > sign_position[0] ) {
+				this.setSelection(
+					Math.min(this.selection.start, sign_position[0]),
+					Math.max(this.selection.end,   sign_position[1]),
+					setReal
+				);
+			}
+		},
+		skipAllways: function(e) {
+			/* codes are taken from http://www.cambiaresearch.com/c4/702b8cd1-e5b0-42e6-83ac-25f0306e3e25/Javascript-Char-Codes-Key-Codes.aspx */
+			/* skip Fx keys, windows keys, other special keys */
+			if ( this.kdCode >= 112 && this.kdCode <= 123 || this.kdCode >= 91 && this.kdCode <= 93 ||
+				this.kdCode >= 9 && this.kdCode <= 31 || 
+			 	this.kdCode < 8 && (this.which === 0 || this.which === this.kdCode) ||
+			 	this.kdCode == 144 || this.kdCode == 145 || this.kdCode == 45) {
+				return true;
+			}
+			/* if select all (a=65) or copy (c=67)*/
+			if ( this.cmdKey && (this.which == 65 || this.which == 67) ){ 
+				return true;
+			}
+			/* if paste (v=86) or cut (x=88) */ 
+			if ( this.cmdKey && (this.which == 86 || this.which == 88) ) {
+				/* replace or cut whole sign */
+				this.expandSelectionOnSign(); 
+				return true;
+			}
+			if ( this.cmdKey ) {
+				return true;
+			}
+			if ( this.kdCode == 37 || this.kdCode == 39 ) {
+				/* jump over thousand separator */
+				if ( e.type == 'keydown' && this.io.aSep && !this.shiftKey ) {
+					if ( this.kdCode == 37 && this.that.value.charAt(this.selection.start - 2) == this.io.aSep ) {
+						this.setPosition(this.selection.start - 1);
+					} else if ( this.kdCode == 39 && this.that.value.charAt(this.selection.start) == this.io.aSep ) {
+						this.setPosition(this.selection.start + 1);
+					}
+				}
+				return true;
+			}
+			if ( this.kdCode >= 34 && this.kdCode <= 40 ) {
+				return true;
+			}
+		},
+		processAllways: function() {
+			var that = this.that;
+			if ( this.kdCode == 8 || this.kdCode == 46 ) { /* process backspace or delete */
+				if ( this.selection.length == 0 ) {
+					var parts = this.getBeforeAfterStriped();
+					if ( this.kdCode == 8 ) {
+						parts[0] = parts[0].substring(0, parts[0].length-1);
+					} else {
+						parts[1] = parts[1].substring(1, parts[1].length);
+					}
+					this.value = parts[0] + parts[1];
+					this.setPosition(parts[0].length, false);
+				} else {
+					this.expandSelectionOnSign(false);
+					this.value = this.value.substring(0, this.selection.start) + 
+					             this.value.substring(this.selection.end, this.value.length);
+					this.setPosition(this.selection.start, false);
+				}
+				return true;
+			}
+			return false;
+		},
+		processKeypress: function() {
+			var io = this.io;
+			var that = this.that;
+			var cCode = String.fromCharCode(this.which);
+			var parts = this.getBeforeAfterStriped();
+			var left = parts[0], right = parts[1];
+			/* start rules when the decimal charactor key is pressed */
+			if (cCode == io.aDec || (io.altDec && cCode == io.altDec) ){
+				/* do not allow decimal character if no decimal part allowed */
+				if ( io.mDec == 0 || !io.aDec ) { return true; } 
+				/* do not allow decimal character before aNeg character */
+				if ( io.aNeg && right.indexOf(io.aNeg) > -1 ) { return true; } 
+				 /* do not allow decimal character if other decimal character present */
+				if ( left.indexOf( io.aDec ) > -1 || right.indexOf( io.aDec ) > -1 ) { 
+					return true; 
+				}
+				this.value = left + io.aDec + right;
+				this.setPosition((left + io.aDec).length, false);
+				return true;
+			}
+			/* start rule on negative sign */
+			if (cCode == '-') {
+				if ( !io.aNeg ) { return true; } /* prevent minus if not allowed */
+				/* change sign of number, remove part if should */
+				if ( left == '' && right.indexOf(io.aNeg) > -1 ) {
+					left = io.aNeg;
+					right = right.substring(1, right.length);
+				}
+				if ( left.charAt(0) == io.aNeg ) {
+					left = left.substring(1, left.length);
+					this.value = left + right;
+					this.setPosition(left.length, false);
+				} else {
+					this.value = io.aNeg + left + right;
+					this.setPosition((io.aNeg + left).length, false);
+				}
+				return true;
+			}
+			/* digits */
+			if (cCode >= '0' && cCode <= '9') {
+				/* if try to insert digit before minus */
+				if ( io.aNeg && left == '' && right.indexOf(io.aNeg) > -1 ) {
+					left = io.aNeg;
+					right = right.substring(1, right.length);
+				}
+				var new_value = left + cCode + right;
+				var position = (left + cCode).length;
+				if ( io.mDec && io.aDec ) {
+					var splited = new_value.replace(io.aNeg,'').split(io.aDec);
+					left = splited[0];
+					right = splited[1];
+				} else {
+					left = new_value.replace(io.aNeg,'');
+					right = '';
+				}
+				if ( left.length <= io.mNum ) {
+					this.value = new_value;
+					this.setPosition(position, false);
+					/* we allow to place superfluous decimal digits cause we would catch them
+					   in a formatQuick and autoGroup */
+				}
+				return true;
+			}
+			/* prevent any other character */
+			return true;
+		},
+		formatQuick: function() {
+			var io = this.io;
+			var parts = this.getBeforeAfterStriped();
+			var value = autoGroup( this.value, this.io );
+			var position = value.length;
+			if ( value ) {
+				var leftReg = new RegExp('^.*?'+ parts[0].split('').join('.*?'));
+				var newLeft = value.match(leftReg);
+				if ( newLeft ) {
+					position = newLeft[0].length;
+					/* if we are just before prefix sign */
+					if ( (position == 0 && value.charAt(0) != io.aNeg || 
+						  position == 1 && value.charAt(0) == io.aNeg) &&
+						  io.aSign && io.pSign == 'p' ) {
+						/* place carret after prefix sign */
+						position = this.io.aSign.length + (value.charAt(0) == '-' ? 1 : 0 );
+					}
+				} else if ( io.aSign && io.pSign == 's' ) {
+					/* place carret before suffix currency sign */
+					position -= io.aSign.length;
+				}
+			}
+			this.that.value = value;
+			this.setPosition( position );
+			this.formatted = true;
+		}
+	});
+	
+	
+	$.fn.autoNumeric = function(options) {
+		return this.each(function() {/* iterate and reformat each matched element */
+			var iv = $(this);/* check input value iv */
+			var holder = new autoNumericHolder(this, options);
+
+			if ( holder.io.aForm ) {
+				iv.autoNumericSet(iv.autoNumericGet(options), options);
+			}
+			
+			iv.keydown(function(e){/* start keyDown event */
+				holder.init(e);
+				if ( holder.skipAllways(e) ) {
+					holder.processed = true;
+					return true;
+				}
+				if ( holder.processAllways() ) {
+					holder.processed = true;
+					holder.formatQuick();
+					e.preventDefault();
+					return false;
+				} else {
+					holder.formatted = false
+				}
+				return true;
+			}).keypress(function(e){/* start keypress  event*/
+				var processed = holder.processed;
+				holder.init(e);
+				if ( holder.skipAllways(e) ) {
+					return true;
+				}
+				if ( processed ) {
+					e.preventDefault();
+					return false;
+				}
+				if ( holder.processAllways() || holder.processKeypress() ) {
+					holder.formatQuick();
+					e.preventDefault();
+					return false;
+				} else {
+					holder.formatted = false
+				}
+			}).keyup(function(e){/* start keyup event routine */
+				/* fix strange bug of double keyup */
+				if ( !holder.keyDown ) { return false; }
+				holder.keyDown = false;
+				holder.init(e);
+				if ( holder.skipAllways(e) ) {
+					return true;
+				}
+				if ( this.value === '' ) {
+					return true;
+				}
+				if ( !holder.formatted ) {
+					holder.formatQuick();
+				}
+			}).bind('change focusout', function(){/* start change - thanks to Javier P. corrected the inline onChange event  added focusout version 1.55*/
+				if (iv.val() !== ''){
+					autoCheck(iv, holder.io);
+				}		
+			}).bind('paste', function(){setTimeout(function(){autoCheck(iv, holder.io);}, 0); });/* thanks to Josh of Digitalbush.com Opera does not fire paste event*/
+		});
+	};
+	function autoGet(obj) {/* thanks to Anthony & Evan C */
+	    if (typeof(obj) == 'string') {
+		  obj = obj.replace(/\[/g, "\\[").replace(/\]/g, "\\]");
+		  obj = '#' + obj.replace(/(:|\.)/g,'\\$1'); 
+		}
+		return $(obj);
+	}
+
 	function aDecIndex(value, io) { /* checks value on digit character */
 		if (io.aSign.indexOf(io.aDec) != -1 && io.pSign == 's') { /* allow a dot in suffix sign */
 			value = value.replace(io.aSign, '');
