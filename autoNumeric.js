@@ -108,15 +108,13 @@
 			this.cmdKey = e.metaKey;
 			this.shiftKey = e.shiftKey;
 			this.selection = getElementSelection(this.that);
-			if ( e.type == 'keydown' || e.type == 'keyup' || e.which == 0 ) {
+			if ( e.type == 'keydown' || e.type == 'keyup' ) {
 				this.kdCode = e.keyCode;
-			} else {
-				this.kdCode = 0;
 			}
 			this.which = e.which;
 			this.hasNeg = io.aNeg && that.value && that.value.charAt(0) == '-';
 			this.processed = false;
-			this.prevent = false;
+			this.formatted = false;
 		},
 		setSelection: function(start, end, setReal) {
 			start = Math.max(start, 0);
@@ -168,14 +166,16 @@
 				return true;
 			}
 			/* if select all (a=65) or copy (c=67)*/
-			if ( this.cmdKey && (this.which == 65 || this.which == 67) ){ 
+			if ( this.cmdKey && (this.kdCode == 65 || this.kdCode == 67) ){ 
 				return true;
 			}
 			/* if paste (v=86) or cut (x=88) */ 
-			if ( this.cmdKey && (this.which == 86 || this.which == 88) ) {
+			if ( this.cmdKey && (this.kdCode == 86 || this.kdCode == 88) ) {
 				/* replace or cut whole sign */
-				this.expandSelectionOnSign(); 
-				return true;
+				if ( e.type == 'keydown' ) {
+					this.expandSelectionOnSign(); 
+				}
+				return e.type == 'keydown' || e.type == 'keypress';
 			}
 			if ( this.cmdKey ) {
 				return true;
@@ -194,6 +194,7 @@
 			if ( this.kdCode >= 34 && this.kdCode <= 40 ) {
 				return true;
 			}
+			return false;
 		},
 		processAllways: function() {
 			var that = this.that;
@@ -322,6 +323,7 @@
 			}
 			
 			iv.keydown(function(e){/* start keyDown event */
+				holder.keyDown = true;
 				holder.init(e);
 				if ( holder.skipAllways(e) ) {
 					holder.processed = true;
@@ -357,6 +359,7 @@
 				/* fix strange bug of double keyup */
 				if ( !holder.keyDown ) { return false; }
 				holder.keyDown = false;
+				var formatted = holder.formatted;
 				holder.init(e);
 				if ( holder.skipAllways(e) ) {
 					return true;
@@ -371,7 +374,7 @@
 				if (iv.val() !== ''){
 					autoCheck(iv, holder.io);
 				}		
-			}).bind('paste', function(){setTimeout(function(){autoCheck(iv, holder.io);}, 0); });/* thanks to Josh of Digitalbush.com Opera does not fire paste event*/
+			}) //.bind('paste', function(){setTimeout(function(){autoCheck(iv, holder.io);}, 0); });/* thanks to Josh of Digitalbush.com Opera does not fire paste event*/
 		});
 	};
 	function autoGet(obj) {/* thanks to Anthony & Evan C */
