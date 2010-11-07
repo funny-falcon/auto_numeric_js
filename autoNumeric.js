@@ -149,11 +149,27 @@
 		expandSelectionOnSign: function(setReal) {
 			var sign_position = this.signPosition();
 			if ( this.selection.start < sign_position[1] && this.selection.end > sign_position[0] ) {
-				this.setSelection(
-					Math.min(this.selection.start, sign_position[0]),
-					Math.max(this.selection.end,   sign_position[1]),
-					setReal
-				);
+				/* if selection catches something except sign and catches only space from sign */
+				if ( (this.selection.start < sign_position[0] || this.selection.end > sign_position[1]) &&
+					 this.value.substring(
+						Math.max(this.selection.start, sign_position[0]),
+						Math.min(this.selection.end,   sign_position[1])
+						).match(/^\s*$/)
+					 ) {
+					/* then select without empty space */
+					if ( this.selection.start < sign_position[0] ) {
+						this.setSelection( this.selection.start, sign_position[0], setReal );
+					} else {
+						this.setSelection( sign_position[1], this.selection.end, setReal );
+					}
+				} else {
+					/* else select with whole sign */
+					this.setSelection(
+						Math.min(this.selection.start, sign_position[0]),
+						Math.max(this.selection.end,   sign_position[1]),
+						setReal
+					);
+				}
 			}
 		},
 		skipAllways: function(e) {
@@ -166,16 +182,16 @@
 				return true;
 			}
 			/* if select all (a=65) or copy (c=67)*/
-			if ( this.cmdKey && (this.kdCode == 65 || this.kdCode == 67) ){ 
+			if ( this.cmdKey && (this.kdCode == 65) ){ 
 				return true;
 			}
 			/* if paste (v=86) or cut (x=88) */ 
-			if ( this.cmdKey && (this.kdCode == 86 || this.kdCode == 88) ) {
+			if ( this.cmdKey && (this.kdCode == 67 || this.kdCode == 86 || this.kdCode == 88) ) {
 				/* replace or cut whole sign */
 				if ( e.type == 'keydown' ) {
 					this.expandSelectionOnSign(); 
 				}
-				return e.type == 'keydown' || e.type == 'keypress';
+				return e.type == 'keydown' || e.type == 'keypress' || this.kdCode == 67;
 			}
 			if ( this.cmdKey ) {
 				return true;
