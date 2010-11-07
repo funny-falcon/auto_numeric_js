@@ -89,6 +89,29 @@
 		return opts;
 	}
 	
+	function autoStrip(s, io){
+		/* remove any uninterested characters */
+		if ( io.ALLOWED_REG === undefined ) {
+			var allowed = io.aNum + io.aDec + io.aNeg;
+			if ( io.altDec ) { this.allowed += io.altDec; }
+			io.ALLOWED_REG = new RegExp('[^' + allowed + ']','gi');
+		}
+		if ( io.NUMBER_REG === undefined ) {
+			io.NUMBER_REG = new RegExp( (io.aNeg ? io.aNeg+'?' : '') + '\\d*' + (io.aDec ? '(?:\\'+io.aDec+'\\d*)?' : ''));
+		}
+		if ( io.aSign ) {
+			while( s.indexOf( io.aSign ) > -1 ) {
+				s = s.replace( io.aSign, '' );
+			}
+		}
+		s = s.replace(io.ALLOWED_REG, '');
+		if ( io.altDec ) { s = s.replace(io.altDec, io.aDec); }
+		/* get only number string */
+		var m = s.match(io.NUMBER_REG);
+		s = m ? m[0] : '';
+		return s;
+	}
+	
 	var autoNumericHolder = function(that, options){
 		this.options = options;
 		this.that = that;
@@ -128,10 +151,8 @@
 		getBeforeAfterStriped: function() {
 			var value = this.value;
 			var io = this.io;
-			var allowed = io.aNum + io.aDec + io.aNeg;
-			var reg = new RegExp('[^' + allowed + ']','gi'); /* remove any uninterested characters */
-			var left = value.substring(0, this.selection.start).replace(io.aSign,'').replace(reg, '');
-			var right = value.substring(this.selection.end, value.length).replace(io.aSign,'').replace(reg, '');
+			var left = autoStrip(value.substring(0, this.selection.start), this.io);
+			var right = autoStrip(value.substring(this.selection.end, value.length), this.io);
 			return [left, right];
 		},
 		signPosition: function() {
@@ -418,13 +439,7 @@
 			else {
 				digitalGroup = /(\d)((\d{3}?)+)$/;
 			}
-			if ( io.aSign ) {
-			  iv = iv.replace(io.aSign, ''); /* clears the currency */
-			}
-			iv = iv.replace("\u00A0",'');/* clears the currency or other symbols and space */
-			if ( io.aSep ) {
-			  iv = iv.split(io.aSep).join('');/* removes the thousand sepparator */
-			}
+			iv = autoStrip( iv, io );
 			var ivSplit = iv.split(io.aDec);/* splits the string at the decimal string */
 			if ( io.altDec && ivSplit.length == 1 ) {
 			    ivSplit = iv.split(io.altDec);
@@ -551,19 +566,7 @@
 			iv.val('');
 			return;
 		}
-		val = val.replace(io.aSign, '');
-		if (io.altDec) {
-		    val = val.replace(io.altDec, io.aDec);
-		}
-		var eNeg = '';
-		if (io.aNeg == '-'){/* escape the negative sign */
-			eNeg = '\\-';
-		}
-		var reg = new RegExp('[^'+eNeg+io.aNum+io.aDec+']','gi');/* regular expreession constructor to delete any characters not allowed for the input field. */
-		var testPaste = val.replace(reg,'');/* deletes all characters that are not permitted in this field */
-		if (testPaste.lastIndexOf('-') > 0 || testPaste.indexOf(io.aDec) != testPaste.lastIndexOf(io.aDec)){/* deletes input if the negitive sign is incorrectly placed or if the are multiple decimal characters */
-			testPaste = '';
-		} 
+		var testPaste = autoStrip( val, io );/* deletes all characters that are not permitted in this field */
 		var rePaste = '';
 		var nNeg = 0;
 		var nSign = '';
