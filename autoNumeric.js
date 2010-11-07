@@ -407,23 +407,6 @@
 		return $(obj);
 	}
 
-	function aDecIndex(value, io) { /* checks value on digit character */
-		if (io.aSign.indexOf(io.aDec) != -1 && io.pSign == 's') { /* allow a dot in suffix sign */
-			value = value.replace(io.aSign, '');
-		}
-		return value.indexOf(io.aDec);
-	}
-	function autoCount(str, start, end){/* private function that counts the numeric characters to the left and right of the decimal point */
-		var chr = '';
-		var numCount = 0; 
-		for (j = start; j < end; j++){
-			chr = str.charAt(j);
-			if (chr >= '0' && chr <= '9'){
-				numCount++;
-			}
-		}
-		return numCount;
-	}
 	function autoGroup(iv, io){/* private function that places the thousand separtor */
 			var digitalGroup = '';
 			if (io.dGroup == 2){
