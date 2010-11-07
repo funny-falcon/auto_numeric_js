@@ -194,6 +194,10 @@
 			}
 		},
 		skipAllways: function(e) {
+			/* catch the ctrl up on ctrl-v */
+			if ( this.kdCode == 17 && e.type == 'keyup' ) {
+				return false;
+			}
 			/* codes are taken from http://www.cambiaresearch.com/c4/702b8cd1-e5b0-42e6-83ac-25f0306e3e25/Javascript-Char-Codes-Key-Codes.aspx */
 			/* skip Fx keys, windows keys, other special keys */
 			if ( this.kdCode >= 112 && this.kdCode <= 123 || this.kdCode >= 91 && this.kdCode <= 93 ||
@@ -405,8 +409,10 @@
 				var formatted = holder.formatted;
 				holder.init(e);
 				if ( holder.skipAllways(e) ) {
+					holder.kdCode = 0;
 					return true;
 				}
+				holder.kdCode = 0;
 				if ( this.value === '' ) {
 					return true;
 				}
