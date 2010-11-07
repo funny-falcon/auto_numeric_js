@@ -285,6 +285,14 @@
 					var splited = new_value.replace(io.aNeg,'').split(io.aDec);
 					left = splited[0];
 					right = splited[1];
+					/* fix decimal part length */
+					if ( right.length > io.mDec ) {
+						right = right.substring(0, io.mDec);
+						new_value = left + io.aDec + right;
+						if ( position > new_value.length ) {
+							position = new_value.length;
+						}
+					}
 				} else {
 					left = new_value.replace(io.aNeg,'');
 					right = '';
@@ -292,8 +300,6 @@
 				if ( left.length <= io.mNum ) {
 					this.value = new_value;
 					this.setPosition(position, false);
-					/* we allow to place superfluous decimal digits cause we would catch them
-					   in a formatQuick and autoGroup */
 				}
 				return true;
 			}
