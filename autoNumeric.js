@@ -309,7 +309,7 @@
 				if ( io.mDec && io.aDec ) {
 					var splited = new_value.replace(io.aNeg,'').split(io.aDec);
 					left = splited[0];
-					right = splited[1];
+					right = splited[1] ? splited[1] : '';
 					/* fix decimal part length */
 					if ( right.length > io.mDec ) {
 						right = right.substring(0, io.mDec);
