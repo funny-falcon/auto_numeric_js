@@ -66,10 +66,6 @@
 		}
 	}
 	
-	function setCarretPosition(that, pos){
-		setElementSelection(that, pos, pos);
-	}
-	
 	function autoCode($this, options){ // function to update the defaults settings
 		var opts = $.extend({}, options);
 		if ( $.metadata ) {
@@ -118,6 +114,7 @@
 		this.$that = $(that);
 		this.formatted = false;
 		this.io = autoCode(this.$that, this.options);
+		this.value = that.value;
 	}
 	
 	$.extend(autoNumericHolder.prototype, {
@@ -156,11 +153,14 @@
 			return [left, right];
 		},
 		signPosition: function() {
-			if ( this.io.aSign ) {
+			var aSign = this.io.aSign;
+			if ( aSign ) {
+			    var aSignLen = aSign.length;
 				if ( this.io.pSign == 'p' ) {
-					return this.hasNeg ? [1, this.io.aSign.length + 1] : [0, this.io.aSign.length];
+					return this.hasNeg ? [1, aSignLen + 1] : [0, aSignLen];
 				} else {
-					return [this.that.value.length - this.io.aSign.length, this.that.value.length] 
+				    var valueLen = this.that.value.length;
+					return [valueLen - aSignLen, valueLen] 
 				}
 			} else {
 				return [1000, -1];
@@ -169,80 +169,85 @@
 		/* if selection touches sign, expand it to cover whole sign */
 		expandSelectionOnSign: function(setReal) {
 			var sign_position = this.signPosition();
-			if ( this.selection.start < sign_position[1] && this.selection.end > sign_position[0] ) {
+			var selection = this.selection;
+			if ( selection.start < sign_position[1] && selection.end > sign_position[0] ) {
 				/* if selection catches something except sign and catches only space from sign */
-				if ( (this.selection.start < sign_position[0] || this.selection.end > sign_position[1]) &&
+				if ( (selection.start < sign_position[0] || selection.end > sign_position[1]) &&
 					 this.value.substring(
-						Math.max(this.selection.start, sign_position[0]),
-						Math.min(this.selection.end,   sign_position[1])
+						Math.max(selection.start, sign_position[0]),
+						Math.min(selection.end,   sign_position[1])
 						).match(/^\s*$/)
 					 ) {
 					/* then select without empty space */
-					if ( this.selection.start < sign_position[0] ) {
-						this.setSelection( this.selection.start, sign_position[0], setReal );
+					if ( selection.start < sign_position[0] ) {
+						this.setSelection( selection.start, sign_position[0], setReal );
 					} else {
-						this.setSelection( sign_position[1], this.selection.end, setReal );
+						this.setSelection( sign_position[1], selection.end, setReal );
 					}
 				} else {
 					/* else select with whole sign */
 					this.setSelection(
-						Math.min(this.selection.start, sign_position[0]),
-						Math.max(this.selection.end,   sign_position[1]),
+						Math.min(selection.start, sign_position[0]),
+						Math.max(selection.end,   sign_position[1]),
 						setReal
 					);
 				}
 			}
 		},
 		skipAllways: function(e) {
+		    var kdCode = this.kdCode, which = this.which, cmdKey = this.cmdKey;
 			/* catch the ctrl up on ctrl-v */
-			if ( this.kdCode == 17 && e.type == 'keyup' ) {
+			if ( kdCode == 17 && e.type == 'keyup' ) {
 				return false;
 			}
 			/* codes are taken from http://www.cambiaresearch.com/c4/702b8cd1-e5b0-42e6-83ac-25f0306e3e25/Javascript-Char-Codes-Key-Codes.aspx */
 			/* skip Fx keys, windows keys, other special keys */
-			if ( this.kdCode >= 112 && this.kdCode <= 123 || this.kdCode >= 91 && this.kdCode <= 93 ||
-				this.kdCode >= 9 && this.kdCode <= 31 || 
-			 	this.kdCode < 8 && (this.which === 0 || this.which === this.kdCode) ||
-			 	this.kdCode == 144 || this.kdCode == 145 || this.kdCode == 45) {
+			if ( kdCode >= 112 && kdCode <= 123 || kdCode >= 91 && kdCode <= 93 ||
+				kdCode >= 9 && kdCode <= 31 || 
+			 	kdCode < 8 && (which === 0 || which === kdCode) ||
+			 	kdCode == 144 || kdCode == 145 || kdCode == 45) {
 				return true;
 			}
 			/* if select all (a=65) or copy (c=67)*/
-			if ( this.cmdKey && (this.kdCode == 65) ){ 
+			if ( cmdKey && (kdCode == 65) ){ 
 				return true;
 			}
 			/* if paste (v=86) or cut (x=88) */ 
-			if ( this.cmdKey && (this.kdCode == 67 || this.kdCode == 86 || this.kdCode == 88) ) {
+			if ( cmdKey && (kdCode == 67 || kdCode == 86 || kdCode == 88) ) {
 				/* replace or cut whole sign */
 				if ( e.type == 'keydown' ) {
 					this.expandSelectionOnSign(); 
 				}
-				return e.type == 'keydown' || e.type == 'keypress' || this.kdCode == 67;
+				return e.type == 'keydown' || e.type == 'keypress' || kdCode == 67;
 			}
-			if ( this.cmdKey ) {
+			if ( cmdKey ) {
 				return true;
 			}
-			if ( this.kdCode == 37 || this.kdCode == 39 ) {
+			if ( kdCode == 37 || kdCode == 39 ) {
 				/* jump over thousand separator */
-				if ( e.type == 'keydown' && this.io.aSep && !this.shiftKey ) {
-					if ( this.kdCode == 37 && this.that.value.charAt(this.selection.start - 2) == this.io.aSep ) {
-						this.setPosition(this.selection.start - 1);
-					} else if ( this.kdCode == 39 && this.that.value.charAt(this.selection.start) == this.io.aSep ) {
-						this.setPosition(this.selection.start + 1);
+				var aSep = this.io.aSep, start = this.selection.start, value = this.that.value;
+				if ( e.type == 'keydown' && aSep && !this.shiftKey ) {
+					if ( kdCode == 37 && value.charAt(start - 2) == aSep ) {
+						this.setPosition(start - 1);
+					} else if ( kdCode == 39 && value.charAt(start) == aSep ) {
+						this.setPosition(start + 1);
 					}
 				}
 				return true;
 			}
-			if ( this.kdCode >= 34 && this.kdCode <= 40 ) {
+			if ( kdCode >= 34 && kdCode <= 40 ) {
 				return true;
 			}
 			return false;
 		},
 		processAllways: function() {
-			var that = this.that;
-			if ( this.kdCode == 8 || this.kdCode == 46 ) { /* process backspace or delete */
-				if ( this.selection.length == 0 ) {
+			var that = this.that, 
+			    selection = this.selection,
+			    kdCode = this.kdCode;
+			if ( kdCode == 8 || kdCode == 46 ) { /* process backspace or delete */
+				if ( selection.length == 0 ) {
 					var parts = this.getBeforeAfterStriped();
-					if ( this.kdCode == 8 ) {
+					if ( kdCode == 8 ) {
 						parts[0] = parts[0].substring(0, parts[0].length-1);
 					} else {
 						parts[1] = parts[1].substring(1, parts[1].length);
@@ -250,10 +255,11 @@
 					this.value = parts[0] + parts[1];
 					this.setPosition(parts[0].length, false);
 				} else {
+				    var value = this.value;
 					this.expandSelectionOnSign(false);
-					this.value = this.value.substring(0, this.selection.start) + 
-					             this.value.substring(this.selection.end, this.value.length);
-					this.setPosition(this.selection.start, false);
+					this.value = value.substring(0, selection.start) + 
+					             value.substring(selection.end, value.length);
+					this.setPosition(selection.start, false);
 				}
 				return true;
 			}
@@ -672,7 +678,6 @@
 		altDec: null,/* allow to replace alternative dec */
 		aSign: '',/* allowed currency symbol */
 		pSign: 'p',/* placement of currency sign prefix or suffix */
-		wSign: false,/* allow to enter number placing cursor on sign */
 		aForm: false,/* atomatically format value in form */
 		mNum: 9,/* max number of numerical characters to the left of the decimal */
 		mDec: 2,/* max number of decimal places */
