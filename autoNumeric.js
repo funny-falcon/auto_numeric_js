@@ -232,7 +232,14 @@
 			var new_value = left + right;
 			var position = left.length;
 			
-			if ( autoCheck(new_value, io) || !autoCheck(this.that.value, io) ) {
+			var checked = autoCheck(new_value, io);
+			/* allow to delete chars after overflow pasting */
+			if ( !checked && !autoCheck(this.value, io) ) {
+				var old_value = autoStrip(this.value, io);
+				checked = old_value.length > new_value.length;
+			}
+			
+			if ( checked ) {
 				new_value = truncateDecimal( new_value, io.aDec, io.mDec, io.aDec );
 				if ( position > new_value.length ) {
 					position = new_value.length;
