@@ -232,7 +232,7 @@
 			var new_value = left + right;
 			var position = left.length;
 			
-			if ( autoCheck(new_value, io) ) {
+			if ( autoCheck(new_value, io) || !autoCheck(this.that.value, io) ) {
 				new_value = truncateDecimal( new_value, io.aDec, io.mDec, io.aDec );
 				if ( position > new_value.length ) {
 					position = new_value.length;
