@@ -409,7 +409,11 @@
 			var value = autoGroup( this.value, this.io );
 			var position = value.length;
 			if ( value ) {
-				var leftReg = new RegExp('^.*?'+ parts[0].split('').join('.*?'));
+				var left_ar = parts[0].split('');
+				for( i in left_ar ) {
+					if ( left_ar[i] === '.' ) { left_ar[i] = '\\.'; }
+				}
+				var leftReg = new RegExp('^.*?'+ left_ar.join('.*?'));
 				var newLeft = value.match(leftReg);
 				if ( newLeft ) {
 					position = newLeft[0].length;
