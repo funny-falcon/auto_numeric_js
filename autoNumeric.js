@@ -524,7 +524,7 @@
 	}
 
 	function autoGroup(iv, io){/* private function that places the thousand separtor */
-			if ( iv == '' || iv == io.aNeg ) { return ''; }
+			if ( iv == '' || iv == io.aNeg ) { return iv; }
 			var digitalGroup = '';
 			if (io.dGroup == 2){
 				digitalGroup = /(\d)((\d)(\d{2}?)+)$/;
