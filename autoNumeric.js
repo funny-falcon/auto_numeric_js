@@ -245,11 +245,11 @@
 		signPosition: function() {
 			var aSign = this.io.aSign;
 			if ( aSign ) {
-			    var aSignLen = aSign.length;
+				var aSignLen = aSign.length;
 				if ( this.io.pSign == 'p' ) {
 					return this.hasNeg ? [1, aSignLen + 1] : [0, aSignLen];
 				} else {
-				    var valueLen = this.that.value.length;
+					var valueLen = this.that.value.length;
 					return [valueLen - aSignLen, valueLen] 
 				}
 			} else {
@@ -285,7 +285,7 @@
 			}
 		},
 		skipAllways: function(e) {
-		    var kdCode = this.kdCode, which = this.which, cmdKey = this.cmdKey;
+			var kdCode = this.kdCode, which = this.which, cmdKey = this.cmdKey;
 			/* catch the ctrl up on ctrl-v */
 			if ( kdCode == 17 && e.type == 'keyup' ) {
 				return false;
@@ -294,8 +294,8 @@
 			/* skip Fx keys, windows keys, other special keys */
 			if ( kdCode >= 112 && kdCode <= 123 || kdCode >= 91 && kdCode <= 93 ||
 				kdCode >= 9 && kdCode <= 31 || 
-			 	kdCode < 8 && (which === 0 || which === kdCode) ||
-			 	kdCode == 144 || kdCode == 145 || kdCode == 45) {
+				kdCode < 8 && (which === 0 || which === kdCode) ||
+				kdCode == 144 || kdCode == 145 || kdCode == 45) {
 				return true;
 			}
 			/* if select all (a=65) or copy (c=67)*/
@@ -332,8 +332,8 @@
 		},
 		processAllways: function() {
 			var that = this.that, 
-			    selection = this.selection,
-			    kdCode = this.kdCode;
+				selection = this.selection,
+				kdCode = this.kdCode;
 			if ( kdCode == 8 || kdCode == 46 ) { /* process backspace or delete */
 				if ( selection.length == 0 ) {
 					var parts = this.getBeforeAfterStriped();
@@ -512,7 +512,7 @@
 		});
 	};
 	function autoGet(obj) {/* thanks to Anthony & Evan C */
-	    if (typeof(obj) == 'string') {
+		if (typeof(obj) == 'string') {
 		  obj = obj.replace(/\[/g, "\\[").replace(/\]/g, "\\]");
 		  obj = '#' + obj.replace(/(:|\.)/g,'\\$1'); 
 		}
@@ -534,7 +534,7 @@
 			iv = autoStrip( iv, io );
 			var ivSplit = iv.split(io.aDec);/* splits the string at the decimal string */
 			if ( io.altDec && ivSplit.length == 1 ) {
-			    ivSplit = iv.split(io.altDec);
+				ivSplit = iv.split(io.altDec);
 			}
 			var s = ivSplit[0];/* assigns the whole number to the a varibale (s) */
 			if ( io.aSep ) {
@@ -543,9 +543,9 @@
 				}
 			}
 			if (io.mDec !== 0 && ivSplit.length > 1){
-			    if ( ivSplit[1].length > io.mDec ) {
-			        ivSplit[1] = ivSplit[1].substring(0, io.mDec);
-			    }
+				if ( ivSplit[1].length > io.mDec ) {
+					ivSplit[1] = ivSplit[1].substring(0, io.mDec);
+				}
 				iv = s + io.aDec + ivSplit[1];/* joins the whole number with the deciaml value */
 			}
 			else {
@@ -569,7 +569,7 @@
 				return iv;
 			}
 	}
-    function autoRound(iv, mDec, mRound, aPad){/* private function for round the number - please note this handled as text - Javascript math function can return inaccurate values */
+	function autoRound(iv, mDec, mRound, aPad){/* private function for round the number - please note this handled as text - Javascript math function can return inaccurate values */
 		iv = (iv === '') ? '0' : iv += ''; /* value to string */
 		var ivRounded = '';
 		var i = 0;
@@ -589,7 +589,7 @@
 			dPos = 1;
 		}
 		if (dPos == -1 || dPos == iv.length - 1){/* Has an integer been passed in? */
-            if (aPad && mDec > 0) {
+			if (aPad && mDec > 0) {
 				ivRounded = (dPos == -1) ? iv + '.' : iv;
 				for(i = 0; i < mDec; i++){/* pads with zero */
 						ivRounded += '0';
@@ -676,7 +676,7 @@
 	$.fn.autoNumeric.Format = function(ii, iv, options){/* public function that recieves a numeric string and formats to the target input field */
 		iv += '';/* to string */
 		var io = autoCode(autoGet(ii), options);
-        iv = autoRound(iv, io.mDec, io.mRound, io.aPad);
+		iv = autoRound(iv, io.mDec, io.mRound, io.aPad);
 		var nNeg = 0;
 		if (iv.indexOf('-') != -1 && io.aNeg === ''){/* deletes negative symbol */
 			iv = '';
@@ -696,10 +696,10 @@
 		return autoGroup(iv, io);
 	};
 	$.fn.autoNumericGet = function(options){
-	    return $.fn.autoNumeric.Strip(this, options); 
+		return $.fn.autoNumeric.Strip(this, options); 
 	};
 	$.fn.autoNumericSet = function(iv, options){
-	    return this.val($.fn.autoNumeric.Format(this, iv, options)); 
+		return this.val($.fn.autoNumeric.Format(this, iv, options)); 
 	};
 	$.fn.autoNumeric.defaults = {/* plugin defaults */
 		aNum: '0123456789',/*  allowed  numeric values */
