@@ -203,12 +203,44 @@
 		setPosition: function(pos, setReal) {
 			this.setSelection(pos, pos, setReal);
 		},
+		normalizeParts: function(left, right) {
+			var io = this.io;
+			right = autoStrip(right, io);
+			/* if right is not empty and first character is not aDec, we could strip all zeros */
+			/* otherwise only leading */
+			var strip = right.match(/^\d/) ? true : 'leading';
+			left = autoStrip(left, io, strip);
+			if ( (left === '' || left === io.aNeg) ) {
+				if ( right > '' ) {
+					right = right.replace(/^0*(\d)/,'$1');
+				}
+			}
+			return [left, right];
+		},
 		getBeforeAfterStriped: function() {
 			var value = this.value;
-			var io = this.io;
 			var left = autoStrip(value.substring(0, this.selection.start), this.io);
 			var right = autoStrip(value.substring(this.selection.end, value.length), this.io);
 			return [left, right];
+		},
+		setValueParts: function(left, right) {
+			log('setValueParts in '+left+' '+right);
+			var io = this.io;
+			var parts = this.normalizeParts(left, right);
+			left = parts[0]; right = parts[1];
+			log('setValueParts md '+left+' '+right);
+			var new_value = left + right;
+			var position = left.length;
+			
+			if ( autoCheck(new_value, io) ) {
+				new_value = truncateDecimal( new_value, io.aDec, io.mDec, io.aDec );
+				if ( position > new_value.length ) {
+					position = new_value.length;
+				}
+				this.value = new_value;
+				log('setValueParts new '+new_value+' pos '+position);
+				this.setPosition(position, false);
+			}
 		},
 		signPosition: function() {
 			var aSign = this.io.aSign;
@@ -310,14 +342,11 @@
 					} else {
 						parts[1] = parts[1].substring(1, parts[1].length);
 					}
-					this.value = parts[0] + parts[1];
-					this.setPosition(parts[0].length, false);
+					this.setValueParts( parts[0], parts[1] );
 				} else {
-				    var value = this.value;
 					this.expandSelectionOnSign(false);
-					this.value = value.substring(0, selection.start) + 
-					             value.substring(selection.end, value.length);
-					this.setPosition(selection.start, false);
+					var parts = this.getBeforeAfterStriped();
+					this.setValueParts( parts[0], parts[1] );
 				}
 				return true;
 			}
@@ -336,29 +365,29 @@
 				/* do not allow decimal character before aNeg character */
 				if ( io.aNeg && right.indexOf(io.aNeg) > -1 ) { return true; } 
 				 /* do not allow decimal character if other decimal character present */
-				if ( left.indexOf( io.aDec ) > -1 || right.indexOf( io.aDec ) > -1 ) { 
-					return true; 
-				}
-				this.value = left + io.aDec + right;
-				this.setPosition((left + io.aDec).length, false);
+				if ( left.indexOf( io.aDec ) > -1 ) { return true; }
+				if ( right.indexOf( io.aDec ) > 0 ) { return true; }
+				if ( right.indexOf( io.aDec ) === 0 ) {
+					right = right.substr(1);
+				} 
+				this.setValueParts(left + io.aDec, right);
 				return true;
 			}
 			/* start rule on negative sign */
 			if (cCode == '-') {
 				if ( !io.aNeg ) { return true; } /* prevent minus if not allowed */
-				/* change sign of number, remove part if should */
+				/* carret is always after minus */
 				if ( left == '' && right.indexOf(io.aNeg) > -1 ) {
 					left = io.aNeg;
 					right = right.substring(1, right.length);
 				}
+				/* change sign of number, remove part if should */
 				if ( left.charAt(0) == io.aNeg ) {
 					left = left.substring(1, left.length);
-					this.value = left + right;
-					this.setPosition(left.length, false);
 				} else {
-					this.value = io.aNeg + left + right;
-					this.setPosition((io.aNeg + left).length, false);
+					left = io.aNeg + left;
 				}
+				this.setValueParts(left, right);
 				return true;
 			}
 			/* digits */
@@ -368,28 +397,7 @@
 					left = io.aNeg;
 					right = right.substring(1, right.length);
 				}
-				var new_value = left + cCode + right;
-				var position = (left + cCode).length;
-				if ( io.mDec && io.aDec ) {
-					var splited = new_value.replace(io.aNeg,'').split(io.aDec);
-					left = splited[0];
-					right = splited[1] ? splited[1] : '';
-					/* fix decimal part length */
-					if ( right.length > io.mDec ) {
-						right = right.substring(0, io.mDec);
-						new_value = left + io.aDec + right;
-						if ( position > new_value.length ) {
-							position = new_value.length;
-						}
-					}
-				} else {
-					left = new_value.replace(io.aNeg,'');
-					right = '';
-				}
-				if ( left.length <= io.mNum ) {
-					this.value = new_value;
-					this.setPosition(position, false);
-				}
+				this.setValueParts(left + cCode, right);
 				return true;
 			}
 			/* prevent any other character */
