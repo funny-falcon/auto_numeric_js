@@ -67,22 +67,53 @@
 	}
 	
 	function autoCode($this, options){ // function to update the defaults settings
-		var opts = $.extend({}, options);
+		var io = $.extend({}, options);
 		if ( $.metadata ) {
-			opts = $.extend(opts, $this.metadata());/* consider declared metadata on input */
+			io = $.extend(io, $this.metadata());/* consider declared metadata on input */
 		}
-		if ( opts.mDec ) {
-			opts.mDec = isNaN(opts.mDec * 1) ? $('#' + opts.mDec).val() * 1 : opts.mDec * 1;/* sets decimal places */
+		if ( io.mDec ) {
+			io.mDec = isNaN(io.mDec * 1) ? $('#' + io.mDec).val() * 1 : io.mDec * 1;/* sets decimal places */
 		}
-		opts = $.extend({}, $.fn.autoNumeric.defaults, opts);
-		if ( opts.altDec === null && opts.mDec > 0 ) {
-			if ( opts.aDec == '.' && opts.aSep != ',' ) {
-				opts.altDec = ',';
-			} else if ( opts.aDec == ',' && opts.aSep != '.' ) {
-				opts.altDec = '.';
+		if ( typeof(io.vMin) === 'number' || typeof(io.vMax) === 'number' ) {
+			var set_mNum = true;
+			if ( typeof(io.vMin) !== 'number' ) {
+				io.vMin = io.aNeg ? -io.vMax : 0;
+			}
+			if ( typeof(io.vMax) !== 'number' ) {
+				if ( io.mNum ) {
+					io.vMax = Math.pow( 10, io.mNum ) - Math.pow( 10, -io.mDec );
+					set_mNum = false;
+				} else {
+					alert('If you set vMin then you should set vMax or mNum!'); 
+				}
+			}
+			if ( io.vMin < 0 && !io.aNeg ) { io.aNeg = '-';}
+			if ( set_mNum ) {
+				var vmax = io.vMax.toString().split('.');
+				var vmin = io.vMin.toString().split('.');
+				io.mNum = Math.max(
+						vmax[0].replace('-','').length,
+						vmin[0].replace('-','').length
+				);
+				if ( !io.mDec && (vmax[1] || vmin[1]) ) {
+					io.mDec = Math.max(
+						(vMax[1] ? vMax[1] : '').length, 
+						(vMin[1] ? vMin[1] : '').length);
+				}
+			}
+		} else {
+			io.vMax = Math.pow( 10, io.mNum ) - Math.pow( 10, -io.mDec );
+			io.vMin = io.aNeg ? -io.vMax : 0;
+		}
+		io = $.extend({}, $.fn.autoNumeric.defaults, io);
+		if ( io.altDec === null && io.mDec > 0 ) {
+			if ( io.aDec == '.' && io.aSep != ',' ) {
+				io.altDec = ',';
+			} else if ( io.aDec == ',' && io.aSep != '.' ) {
+				io.altDec = '.';
 			}
 		}
-		return opts;
+		return io;
 	}
 	
 	function autoStrip(s, io){
