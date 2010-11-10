@@ -224,11 +224,9 @@
 			return [left, right];
 		},
 		setValueParts: function(left, right) {
-			log('setValueParts in '+left+' '+right);
 			var io = this.io;
 			var parts = this.normalizeParts(left, right);
 			left = parts[0]; right = parts[1];
-			log('setValueParts md '+left+' '+right);
 			var new_value = left + right;
 			var position = left.length;
 			
@@ -245,7 +243,6 @@
 					position = new_value.length;
 				}
 				this.value = new_value;
-				log('setValueParts new '+new_value+' pos '+position);
 				this.setPosition(position, false);
 			}
 		},
