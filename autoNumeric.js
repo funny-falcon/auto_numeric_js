@@ -142,6 +142,30 @@
 		return s;
 	}
 	
+	function truncateDecimal( s, aDec, mDec, join ) {
+		if ( aDec && mDec ) {
+			var parts = s.split(aDec);
+			/* truncate decimal part to satisfying length */
+			/* cause we would round it anyway */
+			if ( parts[1] && parts[1].length > mDec ) {
+				parts[1] = parts[1].substring(0, mDec);
+			}
+			s = parts.join(join);
+		}
+		return s;
+	}
+	
+	function autoCheck(s, io){
+		s = autoStrip(s, io);
+		s = truncateDecimal(s, io.aDec, io.mDec, '.');
+		if ( io.aNeg && io.aNeg !== '-' ) {
+			s = s.replace(io.aNeg, '-');
+		}
+		if ( !s.match(/\d/) ) { s += '0'; }
+		var value = s * 1;
+		return value >= io.vMin && value <= io.vMax;
+	}
+	
 	var autoNumericHolder = function(that, options){
 		this.options = options;
 		this.that = that;
@@ -460,8 +484,17 @@
 					holder.formatQuick();
 				}
 			}).bind('change focusout', function(){/* start change - thanks to Javier P. corrected the inline onChange event  added focusout version 1.55*/
-				if (iv.val() !== ''){
-					autoCheck(iv, holder.io);
+				var io = holder.io, value = iv.val();
+				if (value !== ''){
+					value = autoStrip(value, io);
+					if ( autoCheck(value, io) ) {
+						if ( io.aDec ) { value = value.replace(io.aDec, '.'); }
+						value = autoRound(value, io.mDec, io.mRound, io.aPad);
+						if ( io.aDec ) { value = value.replace('.', io.aDec); }
+						iv.val( autoGroup(value, io) );
+					} else {
+						iv.val('');
+					}
 				}		
 			}) //.bind('paste', function(){setTimeout(function(){autoCheck(iv, holder.io);}, 0); });/* thanks to Josh of Digitalbush.com Opera does not fire paste event*/
 		});
@@ -606,55 +639,6 @@
 		}
 		return nSign + ivRounded;/* return rounded value */
 	} 
-	function autoCheck(iv, io){/*  private function that change event and pasted values  */
-		var val = iv.val();
-		if ( val.length > 100 ) { /* maximum length of pasted value */
-			iv.val('');
-			return;
-		}
-		var testPaste = autoStrip( val, io );/* deletes all characters that are not permitted in this field */
-		var rePaste = '';
-		var nNeg = 0;
-		var nSign = '';
-		var i = 0;
-		var s = testPaste.split('');/* split the sting into an array */
-		for (i=0; i<s.length; i++){/* for loop testing pasted value after non allowable characters have been deleted */
-			if (i === 0 && s[i] == '-'){/* allows negative symbol to be added if it is the first character */
-				nNeg = 1;
-				nSign = '-';
-				continue;
-			}
-			if (s[i] == io.aDec && s.length -1 == i){/* if the last charter is a decimal point it is dropped */
-				break;
-			}
-			if (rePaste.length === 0 && s[i] == '0' && (s[i+1] >= 0 || s[i+1] <= 9)){/* controls leading zero */
-				continue;
-			}
-			else {
-				rePaste = rePaste + s[i];
-			}
-
-		}
-		rePaste = nSign + rePaste;
-		if (rePaste.indexOf(io.aDec) == -1 && rePaste.length > (io.mNum + nNeg)){/* checks to see if the maximum & minimum values have been exceeded when no decimal point is present */
-			rePaste = '';
-		}
-		if (rePaste.indexOf(io.aDec) > (io.mNum + nNeg)){/* check to see if the maximum & minimum values have been exceeded when the decimal point is present */
-			rePaste = '';
-		}
-		if (rePaste.indexOf(io.aDec) != -1 && (io.aDec != '.')){
-			rePaste = rePaste.replace(io.aDec, '.');
-		}
-		rePaste = autoRound(rePaste, io.mDec, io.mRound, io.aPad);/* call round function */
-		if (io.aDec != '.'){
-			rePaste = rePaste.replace('.', io.aDec);/* replace the decimal point with the proper decimal separator */
-		}
-		if (rePaste !== ''){
-			rePaste = autoGroup(rePaste, io);/* calls the group function adds digital grouping */
-		}
-		iv.val(rePaste);
-		return false;
-	}
 	$.fn.autoNumeric.Strip = function(ii, options){/* public function that stripes the format and converts decimal seperator to a period */
 		var io = autoCode(autoGet(ii), options);
 		var iv = autoGet(ii).val();
