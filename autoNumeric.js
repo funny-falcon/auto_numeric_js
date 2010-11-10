@@ -116,26 +116,29 @@
 		return io;
 	}
 	
-	function autoStrip(s, io){
-		/* remove any uninterested characters */
-		if ( io.ALLOWED_REG === undefined ) {
-			var allowed = io.aNum + io.aDec + io.aNeg;
-			if ( io.altDec ) { this.allowed += io.altDec; }
-			io.ALLOWED_REG = new RegExp('[^' + allowed + ']','gi');
-		}
-		if ( io.NUMBER_REG === undefined ) {
-			io.NUMBER_REG = new RegExp( (io.aNeg ? io.aNeg+'?' : '') + '\\d*' + (io.aDec ? '(?:\\'+io.aDec+'\\d*)?' : ''));
-		}
+	function autoStrip(s, io, strip_zero){
 		if ( io.aSign ) {
 			while( s.indexOf( io.aSign ) > -1 ) {
 				s = s.replace( io.aSign, '' );
 			}
 		}
-		s = s.replace(io.ALLOWED_REG, '');
+		/* remove any uninterested characters */
+		var allowed = io.aNeg + io.aNum + io.aDec;
+		if ( io.altDec ) { allowed += io.altDec; }
+		allowed = new RegExp('[^' + allowed + ']','gi');
+		s = s.replace(allowed, '');
 		if ( io.altDec ) { s = s.replace(io.altDec, io.aDec); }
 		/* get only number string */
-		var m = s.match(io.NUMBER_REG);
+		var num_reg = new RegExp( (io.aNeg ? io.aNeg+'?' : '') + '\\d*' + (io.aDec ? '(?:\\'+io.aDec+'\\d*)?' : ''));
+		var m = s.match(num_reg);
 		s = m ? m[0] : '';
+		/* strip zero if need */
+		if ( strip_zero ) {
+			var strip_reg = '^(' + (io.aNeg ? io.aNeg+'?' : '') + ')0*(\\d' +
+				(strip_zero === 'leading' ? ')' : '|$)');
+			strip_reg = new RegExp(strip_reg);
+			s = s.replace( strip_reg, '$1$2');
+		}
 		return s;
 	}
 	
