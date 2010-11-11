@@ -254,6 +254,10 @@
 					new_value = left + right;
 				}
 			}
+			if ( io.wEmpty == 'zero' && (new_value == io.aNeg || new_value == '') ) {
+				left += '0';
+			}
+			new_value = left + right;
 			var position = left.length;
 			
 			var checked = autoCheck(new_value, io);
@@ -551,7 +555,16 @@
 	}
 
 	function autoGroup(iv, io){/* private function that places the thousand separtor */
-			if ( iv == '' || iv == io.aNeg ) { return iv; }
+			iv = autoStrip( iv, io );
+			if ( iv == '' || iv == io.aNeg ) {
+				if ( io.wEmpty == 'zero' ) {
+					return iv + '0';
+				} else if ( io.wEmpty == 'sign' ) {
+					return iv + io.aSign;
+				} else {
+					return iv;
+				}
+			}
 			var digitalGroup = '';
 			if (io.dGroup == 2){
 				digitalGroup = /(\d)((\d)(\d{2}?)+)$/;
@@ -562,7 +575,6 @@
 			else {
 				digitalGroup = /(\d)((\d{3}?)+)$/;
 			}
-			iv = autoStrip( iv, io );
 			var ivSplit = iv.split(io.aDec);/* splits the string at the decimal string */
 			if ( io.altDec && ivSplit.length == 1 ) {
 				ivSplit = iv.split(io.altDec);
@@ -718,6 +730,7 @@
 		mDec: null,/* max number of decimal places */
 		vMin: -999999999.99,
 		vMax:  999999999.99,
+		wEmpty: 'empty', /* what display on empty string, could be 'empty', 'zero' or 'sign' */
 		dGroup: 3,/* digital grouping for the thousand separator used in Format */
 		mRound: 'S',/* method used for rounding */
 		aPad: true/* true= always Pad decimals with zeros, false=does not pad with zeros. If the value is 1000, mDec=2 and aPad=true, the output will be 1000.00, if aPad=false the output will be 1000 (no decimals added) Special Thanks to Jonas Johansson */
