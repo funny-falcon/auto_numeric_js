@@ -171,6 +171,16 @@
 		return s;
 	}
 	
+	function presentNumber(s, aDec, aNeg) {
+		if ( aNeg && aNeg !== '-' ) {
+			s = s.replace('-', aNeg);
+		}
+		if ( aDec && aDec !== '.' ) {
+			s = s.replace('.', aDec);
+		}
+		return s;
+	}
+	
 	function autoCheck(s, io){
 		s = autoStrip(s, io);
 		s = truncateDecimal(s, io.aDec, io.mDec);
@@ -521,9 +531,9 @@
 				if (value !== ''){
 					value = autoStrip(value, io);
 					if ( autoCheck(value, io) ) {
-						if ( io.aDec ) { value = value.replace(io.aDec, '.'); }
+						value = fixNumber(value, io.aDec, io.aNeg);
 						value = autoRound(value, io.mDec, io.mRound, io.aPad);
-						if ( io.aDec ) { value = value.replace('.', io.aDec); }
+						value = presentNumber(value, io.aDec, io.aNeg); 
 						iv.val( autoGroup(value, io) );
 					} else {
 						iv.val('');
@@ -685,15 +695,8 @@
 		iv += '';/* to string */
 		var io = autoCode(autoGet(ii), options);
 		iv = autoRound(iv, io.mDec, io.mRound, io.aPad);
-		if ( io.aNeg && io.aNeg !== '-' ) {
-			iv = iv.replace('-', io.aNeg);
-		}
-		if ( io.aDec && io.aDec !== '.' ) {
-			iv = iv.replace('.', io.aDec);
-		}
-		if ( !autoCheck(iv, io) ) {
-			iv = '';
-		}
+		iv = presentNumber(iv, io.aDec, io.aNeg);
+		if ( !autoCheck(iv, io) ) { iv = ''; }
 		return autoGroup(iv, io);
 	};
 	$.fn.autoNumericGet = function(options){
