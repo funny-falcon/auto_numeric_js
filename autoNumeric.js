@@ -147,7 +147,7 @@
 		return s;
 	}
 	
-	function truncateDecimal( s, aDec, mDec, join ) {
+	function truncateDecimal( s, aDec, mDec ) {
 		if ( aDec && mDec ) {
 			var parts = s.split(aDec);
 			/* truncate decimal part to satisfying length */
@@ -155,18 +155,26 @@
 			if ( parts[1] && parts[1].length > mDec ) {
 				parts[1] = parts[1].substring(0, mDec);
 			}
-			s = parts.join(join);
+			s = parts.join(aDec);
 		}
+		return s;
+	}
+	
+	function fixNumber(s, aDec, aNeg) {
+		if ( aDec && aDec !== '.' ) {
+			s = s.replace(aDec, '.');
+		}
+		if ( aNeg && aNeg !== '-' ) {
+			s = s.replace(aNeg, '-');
+		}
+		if ( !s.match(/\d/) ) { s += '0'; }
 		return s;
 	}
 	
 	function autoCheck(s, io){
 		s = autoStrip(s, io);
-		s = truncateDecimal(s, io.aDec, io.mDec, '.');
-		if ( io.aNeg && io.aNeg !== '-' ) {
-			s = s.replace(io.aNeg, '-');
-		}
-		if ( !s.match(/\d/) ) { s += '0'; }
+		s = truncateDecimal(s, io.aDec, io.mDec);
+		s = fixNumber(s, io.aDec, io.aNeg);
 		var value = s * 1;
 		return value >= io.vMin && value <= io.vMax;
 	}
@@ -251,7 +259,7 @@
 			}
 			
 			if ( checked ) {
-				new_value = truncateDecimal( new_value, io.aDec, io.mDec, io.aDec );
+				new_value = truncateDecimal( new_value, io.aDec, io.mDec );
 				if ( position > new_value.length ) {
 					position = new_value.length;
 				}
@@ -672,43 +680,23 @@
 	$.fn.autoNumeric.Strip = function(ii, options){/* public function that stripes the format and converts decimal seperator to a period */
 		var io = autoCode(autoGet(ii), options);
 		var iv = autoGet(ii).val();
-		iv = iv.replace(io.aSign, '').replace('\u00A0','');
-		var reg = new RegExp('[^'+'\\-'+io.aNum+io.aDec+']','gi');/* regular expreession constructor */
-		iv = iv.replace(reg,'');/* deletes all characters that are not permitted in this field */
-		var nSign = ''; 
-		if (iv.charAt(0) == '-'){/* Checks if the iv (input Value)is a negative value */
-			nSign = (iv * 1 === 0) ? '' : '-';/* determines if the value is zero - if zero no negative sign */
-			iv = iv.replace('-', '');/*  removes the negative sign will be added back later if required */
-		}
-		iv = iv.replace(io.aDec, '.');
-		if (iv * 1 > 0){
-			while (iv.substr(0,1) == '0' && iv.length > 1) { 
-				iv = iv.substr(1); 
-			}
-		}
-		iv = (iv.lastIndexOf('.') === 0) ? ('0' + iv) : iv;
-		iv = (iv * 1 === 0) ? '0' : iv;
-		return nSign + iv;
+		iv = autoStrip( iv, io);
+		iv = fixNumber( iv, io.aDec, io.aNeg );
+		if ( iv * 1 === 0 ) { iv = '0'; }
+		return iv;
 	};
 	$.fn.autoNumeric.Format = function(ii, iv, options){/* public function that recieves a numeric string and formats to the target input field */
 		iv += '';/* to string */
 		var io = autoCode(autoGet(ii), options);
 		iv = autoRound(iv, io.mDec, io.mRound, io.aPad);
-		var nNeg = 0;
-		if (iv.indexOf('-') != -1 && io.aNeg === ''){/* deletes negative symbol */
-			iv = '';
+		if ( io.aNeg && io.aNeg !== '-' ) {
+			iv = iv.replace('-', io.aNeg);
 		}
-		else if (iv.indexOf('-') != -1 && io.aNeg == '-'){
-			nNeg = 1;
-		}
-		if (iv.indexOf('.') == -1 && iv.length > (io.mNum + nNeg)){/* check to see if the maximum & minimum values have been exceeded when no decimal point is present */
-			iv = '';
-		}
-		else if (iv.indexOf('.') > (io.mNum + nNeg)){/* check to see if the maximum & minimum values have been exceeded when a decimal point is present */
-			iv = '';
-		}
-		if (io.aDec != '.'){/* replaces the decimal point with the new sepatator */
+		if ( io.aDec && io.aDec !== '.' ) {
 			iv = iv.replace('.', io.aDec);
+		}
+		if ( !autoCheck(iv, io) ) {
+			iv = '';
 		}
 		return autoGroup(iv, io);
 	};
