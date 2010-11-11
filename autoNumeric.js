@@ -343,7 +343,7 @@
 				if ( e.type == 'keydown' ) {
 					this.expandSelectionOnSign(); 
 				}
-				return e.type == 'keydown' || e.type == 'keypress' || kdCode == 67;
+				return e.type == 'keydown' || e.type == 'keypress';
 			}
 			if ( cmdKey ) {
 				return true;
@@ -481,7 +481,6 @@
 			}
 			
 			iv.keydown(function(e){/* start keyDown event */
-				holder.keyDown = true;
 				holder.init(e);
 				if ( holder.skipAllways(e) ) {
 					holder.processed = true;
@@ -514,9 +513,6 @@
 					holder.formatted = false
 				}
 			}).keyup(function(e){/* start keyup event routine */
-				/* fix strange bug of double keyup */
-				if ( !holder.keyDown ) { return false; }
-				holder.keyDown = false;
 				var formatted = holder.formatted;
 				holder.init(e);
 				if ( holder.skipAllways(e) ) {
