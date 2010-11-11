@@ -71,6 +71,13 @@
 		if ( $.metadata ) {
 			io = $.extend(io, $this.metadata());/* consider declared metadata on input */
 		}
+		if ( (typeof(io.mNum) !== 'number' &&
+			  (typeof(io.vMin) !== 'number' || typeof(io.vMax) !== 'number')) ||
+		     (typeof(io.mNum) === 'number' && typeof(io.mDec) !== 'number' && 
+		      typeof(io.vMin) !== 'number' && typeof(io.vMax) !== 'number')
+			 ) {
+			io = $.extend({}, $.fn.autoNumeric.defaults, io);
+		}
 		if ( io.mDec ) {
 			io.mDec = isNaN(io.mDec * 1) ? $('#' + io.mDec).val() * 1 : io.mDec * 1;/* sets decimal places */
 		}
@@ -83,8 +90,6 @@
 				if ( io.mNum ) {
 					io.vMax = Math.pow( 10, io.mNum ) - Math.pow( 10, -io.mDec );
 					set_mNum = false;
-				} else {
-					alert('If you set vMin then you should set vMax or mNum!'); 
 				}
 			}
 			if ( io.vMin < 0 && !io.aNeg ) { io.aNeg = '-';}
@@ -97,8 +102,8 @@
 				);
 				if ( !io.mDec && (vmax[1] || vmin[1]) ) {
 					io.mDec = Math.max(
-						(vMax[1] ? vMax[1] : '').length, 
-						(vMin[1] ? vMin[1] : '').length);
+						(vmax[1] ? vmax[1] : '').length, 
+						(vmin[1] ? vmin[1] : '').length);
 				}
 			}
 		} else {
@@ -714,8 +719,10 @@
 		aSign: '',/* allowed currency symbol */
 		pSign: 'p',/* placement of currency sign prefix or suffix */
 		aForm: false,/* atomatically format value in form */
-		mNum: 9,/* max number of numerical characters to the left of the decimal */
-		mDec: 2,/* max number of decimal places */
+		mNum: null,/* max number of numerical characters to the left of the decimal */
+		mDec: null,/* max number of decimal places */
+		vMin: -999999999.99,
+		vMax:  999999999.99,
 		dGroup: 3,/* digital grouping for the thousand separator used in Format */
 		mRound: 'S',/* method used for rounding */
 		aPad: true/* true= always Pad decimals with zeros, false=does not pad with zeros. If the value is 1000, mDec=2 and aPad=true, the output will be 1000.00, if aPad=false the output will be 1000 (no decimals added) Special Thanks to Jonas Johansson */
