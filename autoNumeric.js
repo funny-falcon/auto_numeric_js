@@ -190,12 +190,8 @@
 	
 	$.extend(autoNumericHolder.prototype, {
 		init: function(e){
-			var that = this.that;
-			var io = autoCode(this.$that, this.options);
 			this.value = this.that.value;
-			this.io = io;
-			this.allowed = io.aNum + io.aDec + io.aNeg;
-			if ( io.altDec ) { this.allowed += io.altDec; }
+			this.io = autoCode(this.$that, this.options);
 			this.cmdKey = e.metaKey;
 			this.shiftKey = e.shiftKey;
 			this.selection = getElementSelection(this.that);
@@ -203,7 +199,6 @@
 				this.kdCode = e.keyCode;
 			}
 			this.which = e.which;
-			this.hasNeg = io.aNeg && that.value && that.value.charAt(0) == '-';
 			this.processed = false;
 			this.formatted = false;
 		},
@@ -268,11 +263,12 @@
 			}
 		},
 		signPosition: function() {
-			var aSign = this.io.aSign;
+			var io = this.io, aSign = io.aSign;
 			if ( aSign ) {
 				var aSignLen = aSign.length;
-				if ( this.io.pSign == 'p' ) {
-					return this.hasNeg ? [1, aSignLen + 1] : [0, aSignLen];
+				if ( io.pSign == 'p' ) {
+					var hasNeg = io.aNeg && that.value && that.value.charAt(0) == io.aNeg
+					return hasNeg ? [1, aSignLen + 1] : [0, aSignLen];
 				} else {
 					var valueLen = this.that.value.length;
 					return [valueLen - aSignLen, valueLen] 
