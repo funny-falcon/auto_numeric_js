@@ -538,11 +538,11 @@
 						value = fixNumber(value, io.aDec, io.aNeg);
 						value = autoRound(value, io.mDec, io.mRound, io.aPad);
 						value = presentNumber(value, io.aDec, io.aNeg); 
-						iv.val( autoGroup(value, io) );
 					} else {
-						iv.val('');
+						value = '';
 					}
-				}		
+				}
+				iv.val( autoGroup(value, io) )
 			}) //.bind('paste', function(){setTimeout(function(){autoCheck(iv, holder.io);}, 0); });/* thanks to Josh of Digitalbush.com Opera does not fire paste event*/
 		});
 	};
