@@ -233,6 +233,14 @@
 			var parts = this.normalizeParts(left, right);
 			left = parts[0]; right = parts[1];
 			var new_value = left + right;
+			/* insert zero if has leading dot */
+			if ( io.aDec ) {
+				var m = new_value.match(new RegExp('^(\\D?)\\' + io.aDec)); 
+				if ( m ) {
+					left = left.replace(m[1], m[1]+'0');
+					new_value = left + right;
+				}
+			}
 			var position = left.length;
 			
 			var checked = autoCheck(new_value, io);
