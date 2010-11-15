@@ -100,7 +100,7 @@
 						vmax[0].replace('-','').length,
 						vmin[0].replace('-','').length
 				);
-				if ( !io.mDec && (vmax[1] || vmin[1]) ) {
+				if ( io.mDec === null && (vmax[1] || vmin[1]) ) {/* if ( !io.mDec && (vmax[1] || vmin[1]) ) { */
 					io.mDec = Math.max(
 						(vmax[1] ? vmax[1] : '').length, 
 						(vmin[1] ? vmin[1] : '').length);
@@ -409,7 +409,7 @@
 				return true;
 			}
 			/* start rule on negative sign */
-			if (cCode == '-') {
+			if (cCode == '-' || cCode == '+') {/* if (cCode == '-') { */
 				if ( !io.aNeg ) { return true; } /* prevent minus if not allowed */
 				/* carret is always after minus */
 				if ( left == '' && right.indexOf(io.aNeg) > -1 ) {
@@ -420,7 +420,7 @@
 				if ( left.charAt(0) == io.aNeg ) {
 					left = left.substring(1, left.length);
 				} else {
-					left = io.aNeg + left;
+					left = ( cCode == '-' ) ? io.aNeg + left : left; /*left = io.aNeg + left; */
 				}
 				this.setValueParts(left, right);
 				return true;
