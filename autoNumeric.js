@@ -217,7 +217,7 @@
 		return value >= io.vMin && value <= io.vMax;
 	}
 	
-	var autoNumericHolder = function(that, options){
+	function autoNumericHolder (that, options){
 		this.options = options;
 		this.that = that;
 		this.$that = $(that);
