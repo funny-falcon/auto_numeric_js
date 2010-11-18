@@ -121,10 +121,17 @@
 				vmax[0].replace('-','').length,
 				vmin[0].replace('-','').length
 		);
-		if ( io.mDec === null && (vmax[1] || vmin[1]) ) {
+		if ( io.mDec === null ) {
 			io.mDec = Math.max(
 				(vmax[1] ? vmax[1] : '').length, 
 				(vmin[1] ? vmin[1] : '').length);
+		} else {
+			if ( vmax[1] && vmax[1].length > io.mDec ) {
+				io.vMax = vmax.join('.') * 1;
+			}
+			if ( vmin[1] && vmin[1].length > io.mDec ) {
+				io.vMin = vmin.join('.') * 1;
+			}
 		}
 		
 		if ( !io.fDefaultMerged ) {
