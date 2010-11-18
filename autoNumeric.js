@@ -523,7 +523,7 @@
 			var iv = $(this);/* check input value iv */
 			var holder = new autoNumericHolder(this, options);
 
-			if ( holder.io.aForm ) {
+			if ( holder.io.aForm && (this.value != '' || holder.io.wEmpty != 'empty') ) {
 				iv.autoNumericSet(iv.autoNumericGet(options), options);
 			}
 			
