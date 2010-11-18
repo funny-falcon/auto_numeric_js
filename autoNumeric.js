@@ -288,21 +288,16 @@
 			new_value = left + right;
 			var position = left.length;
 			
-			var checked = autoCheck(new_value, io);
-			/* allow to delete chars after overflow pasting */
-			if ( !checked && !autoCheck(this.value, io) ) {
-				var old_value = autoStrip(this.value, io);
-				checked = old_value.length > new_value.length;
-			}
-			
-			if ( checked ) {
+			if ( autoCheck(new_value, io) ) {
 				new_value = truncateDecimal( new_value, io.aDec, io.mDec );
 				if ( position > new_value.length ) {
 					position = new_value.length;
 				}
 				this.value = new_value;
 				this.setPosition(position, false);
+				return true;
 			}
+			return false;
 		},
 		signPosition: function() {
 			var io = this.io, aSign = io.aSign;
@@ -347,10 +342,24 @@
 				}
 			}
 		},
+		checkPaste: function() {
+			if ( this.valuePartsBeforePaste !== undefined ) {
+				var parts = this.getBeforeAfterStriped();
+				var oldParts = this.valuePartsBeforePaste;
+				delete this.valuePartsBeforePaste;
+				if ( !this.setValueParts(parts[0], parts[1]) ) {
+					this.value = oldParts.join('');
+					this.setPosition( oldParts[0].length );
+				}
+			}
+		},
 		skipAllways: function(e) {
 			var kdCode = this.kdCode, which = this.which, cmdKey = this.cmdKey;
 			/* catch the ctrl up on ctrl-v */
 			if ( kdCode == 17 && e.type == 'keyup' ) {
+				if ( this.valuePartsBeforePaste !== undefined ) {
+					this.checkPaste(); 
+				}
 				return false;
 			}
 			/* codes are taken from http://www.cambiaresearch.com/c4/702b8cd1-e5b0-42e6-83ac-25f0306e3e25/Javascript-Char-Codes-Key-Codes.aspx */
@@ -361,17 +370,25 @@
 				kdCode == 144 || kdCode == 145 || kdCode == 45) {
 				return true;
 			}
-			/* if select all (a=65) or copy (c=67)*/
-			if ( cmdKey && (kdCode == 65) ){ 
+			/* if select all (a=65)*/
+			if ( cmdKey && kdCode == 65 ){ 
 				return true;
 			}
-			/* if paste (v=86) or cut (x=88) */ 
+			/* if copy (c=67) paste (v=86) or cut (x=88) */ 
 			if ( cmdKey && (kdCode == 67 || kdCode == 86 || kdCode == 88) ) {
 				/* replace or cut whole sign */
 				if ( e.type == 'keydown' ) {
 					this.expandSelectionOnSign(); 
 				}
-				return e.type == 'keydown' || e.type == 'keypress';
+				/* try to prevent wrong paste */
+				if ( kdCode == 86 ) {
+					if ( e.type == 'keydown' || e.type == 'keypress' ) {
+						this.valuePartsBeforePaste = this.getBeforeAfterStriped();
+					} else {
+						this.checkPaste();
+					}
+				}
+				return e.type == 'keydown' || e.type == 'keypress' || kdCode == 67;
 			}
 			if ( cmdKey ) {
 				return true;
