@@ -110,7 +110,9 @@
 			io.vMax = Math.pow( 10, io.mNum ) - Math.pow( 10, -io.mDec );
 			io.vMin = io.aNeg ? -io.vMax : 0;
 		}
-		io = $.extend({}, $.fn.autoNumeric.defaults, io);
+		if ( !io.fDefaultMerged ) {
+		    io = $.extend({}, $.fn.autoNumeric.defaults, io);
+		}
 		if ( io.altDec === null && io.mDec > 0 ) {
 			if ( io.aDec == '.' && io.aSep != ',' ) {
 				io.altDec = ',';
@@ -724,11 +726,12 @@
 		aForm: false,/* atomatically format value in form */
 		mNum: null,/* max number of numerical characters to the left of the decimal */
 		mDec: null,/* max number of decimal places */
-		vMin: -999999999.99,
-		vMax:  999999999.99,
+		vMin: -999999999.99,/* minimum possible value */
+		vMax:  999999999.99,/* maximum possible value */
 		wEmpty: 'empty', /* what display on empty string, could be 'empty', 'zero' or 'sign' */
 		dGroup: 3,/* digital grouping for the thousand separator used in Format */
 		mRound: 'S',/* method used for rounding */
-		aPad: true/* true= always Pad decimals with zeros, false=does not pad with zeros. If the value is 1000, mDec=2 and aPad=true, the output will be 1000.00, if aPad=false the output will be 1000 (no decimals added) Special Thanks to Jonas Johansson */
+		aPad: true,/* true= always Pad decimals with zeros, false=does not pad with zeros. If the value is 1000, mDec=2 and aPad=true, the output will be 1000.00, if aPad=false the output will be 1000 (no decimals added) Special Thanks to Jonas Johansson */
+		fDefaultMerged: true /* is just a flag that indicates that defaults are allready merged */
 	};
 })(jQuery);
