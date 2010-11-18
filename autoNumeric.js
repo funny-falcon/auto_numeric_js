@@ -409,7 +409,7 @@
 				return true;
 			}
 			/* start rule on negative sign */
-			if (cCode == '-' || cCode == '+') {/* if (cCode == '-') { */
+			if (cCode == '-' || cCode == '+') {
 				if ( !io.aNeg ) { return true; } /* prevent minus if not allowed */
 				/* carret is always after minus */
 				if ( left == '' && right.indexOf(io.aNeg) > -1 ) {
@@ -420,7 +420,7 @@
 				if ( left.charAt(0) == io.aNeg ) {
 					left = left.substring(1, left.length);
 				} else {
-					left = ( cCode == '-' ) ? io.aNeg + left : left; /*left = io.aNeg + left; */
+					left = ( cCode == '-' ) ? io.aNeg + left : left;
 				}
 				this.setValueParts(left, right);
 				return true;
