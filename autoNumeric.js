@@ -349,7 +349,7 @@
 				delete this.valuePartsBeforePaste;
 				if ( !this.setValueParts(parts[0], parts[1]) ) {
 					this.value = oldParts.join('');
-					this.setPosition( oldParts[0].length );
+					this.setPosition( oldParts[0].length, false );
 				}
 			}
 		},
