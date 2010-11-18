@@ -89,50 +89,49 @@
 			io = $.extend(io, $this.metadata());/* consider declared metadata on input */
 		}
 		
-		if ( (typeof(io.mNum) !== 'number' &&
-			  (typeof(io.vMin) !== 'number' || typeof(io.vMax) !== 'number')) ||
-		     (typeof(io.mNum) === 'number' && typeof(io.mDec) !== 'number' && 
-		      typeof(io.vMin) !== 'number' && typeof(io.vMax) !== 'number')
-			 ) {
+		/* merge with defaults if not all necessary options present     */
+		/* currently vMin and vMax are sufficient                       */
+		/* if vMax is not present then it calculates from mNum and mDec */
+		/*   (if mNum == 4 and mDec == 1 then vMax == 9999.9)           */
+		/* if vMin is not present then it == -vMax when aNeg is present and 0 otherwise */ 
+		if ( !(
+			typeof(io.vMin) === 'number' && typeof(io.vMax) === 'number' ||
+			typeof(io.vMax) !== 'number' && 
+				(typeof(io.mNum) !== 'number' || typeof(io.mDec) !== 'number')
+			) ) {
 			io = $.extend({}, $.fn.autoNumeric.defaults, io);
 		}
 		
 		runCallbacks(io);
 		
-		if ( typeof(io.vMin) === 'number' || typeof(io.vMax) === 'number' ) {
-			var set_mNum = true;
-			if ( typeof(io.vMin) !== 'number' ) {
-				io.vMin = io.aNeg ? -io.vMax : 0;
-			}
-			if ( typeof(io.vMax) !== 'number' ) {
-				if ( io.mNum ) {
-					io.vMax = Math.pow( 10, io.mNum ) - Math.pow( 10, -io.mDec );
-					set_mNum = false;
-				}
-			}
-			if ( io.vMin < 0 && !io.aNeg ) { io.aNeg = '-';}
-			if ( set_mNum ) {
-				var vmax = io.vMax.toString().split('.');
-				var vmin = io.vMin.toString().split('.');
-				io.mNum = Math.max(
-						vmax[0].replace('-','').length,
-						vmin[0].replace('-','').length
-				);
-				if ( io.mDec === null && (vmax[1] || vmin[1]) ) {/* if ( !io.mDec && (vmax[1] || vmin[1]) ) { */
-					io.mDec = Math.max(
-						(vmax[1] ? vmax[1] : '').length, 
-						(vmin[1] ? vmin[1] : '').length);
-				}
-			}
-		} else {
+		if ( typeof(io.vMax) !== 'number' ) {
 			io.vMax = Math.pow( 10, io.mNum ) - Math.pow( 10, -io.mDec );
+		}
+		
+		if ( typeof(io.vMin) !== 'number' ) {
 			io.vMin = io.aNeg ? -io.vMax : 0;
+		}
+
+		if ( io.vMin < 0 && !io.aNeg ) { io.aNeg = '-';}
+
+		/* set nNum and mDec */
+		var vmax = io.vMax.toString().split('.');
+		var vmin = io.vMin.toString().split('.');
+		io.mNum = Math.max(
+				vmax[0].replace('-','').length,
+				vmin[0].replace('-','').length
+		);
+		if ( io.mDec === null && (vmax[1] || vmin[1]) ) {
+			io.mDec = Math.max(
+				(vmax[1] ? vmax[1] : '').length, 
+				(vmin[1] ? vmin[1] : '').length);
 		}
 		
 		if ( !io.fDefaultMerged ) {
-		    io = $.extend({}, $.fn.autoNumeric.defaults, io);
+			io = $.extend({}, $.fn.autoNumeric.defaults, io);
 		}
 		
+		/* set alternative decimal separator key */
 		if ( io.altDec === null && io.mDec > 0 ) {
 			if ( io.aDec == '.' && io.aSep != ',' ) {
 				io.altDec = ',';
