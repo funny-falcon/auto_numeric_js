@@ -66,11 +66,29 @@
 		}
 	}
 	
+	function runCallbacks(io) {
+	    var k;
+	    for( k in io ) {
+	        var val = io[k];
+	        if ( typeof(val) === 'function' ) {
+	            io[k] = val(io, k);
+	        } else if ( typeof(val) === 'string' && val.match(/^eval:/) ) {
+	            var val = eval(val.substr(5));
+	            if ( typeof(val) === 'function') {
+	                io[k] = val(io, k);
+	            } else {
+	                io[k] = val;
+	            }
+	        }
+	    }
+	}
+	
 	function autoCode($this, options){ // function to update the defaults settings
 		var io = $.extend({}, options);
 		if ( $.metadata ) {
 			io = $.extend(io, $this.metadata());/* consider declared metadata on input */
 		}
+		
 		if ( (typeof(io.mNum) !== 'number' &&
 			  (typeof(io.vMin) !== 'number' || typeof(io.vMax) !== 'number')) ||
 		     (typeof(io.mNum) === 'number' && typeof(io.mDec) !== 'number' && 
@@ -78,9 +96,9 @@
 			 ) {
 			io = $.extend({}, $.fn.autoNumeric.defaults, io);
 		}
-		if ( io.mDec ) {
-			io.mDec = isNaN(io.mDec * 1) ? $('#' + io.mDec).val() * 1 : io.mDec * 1;/* sets decimal places */
-		}
+		
+		runCallbacks(io);
+		
 		if ( typeof(io.vMin) === 'number' || typeof(io.vMax) === 'number' ) {
 			var set_mNum = true;
 			if ( typeof(io.vMin) !== 'number' ) {
@@ -110,9 +128,11 @@
 			io.vMax = Math.pow( 10, io.mNum ) - Math.pow( 10, -io.mDec );
 			io.vMin = io.aNeg ? -io.vMax : 0;
 		}
+		
 		if ( !io.fDefaultMerged ) {
 		    io = $.extend({}, $.fn.autoNumeric.defaults, io);
 		}
+		
 		if ( io.altDec === null && io.mDec > 0 ) {
 			if ( io.aDec == '.' && io.aSep != ',' ) {
 				io.altDec = ',';
