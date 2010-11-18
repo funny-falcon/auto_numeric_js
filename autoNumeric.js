@@ -383,7 +383,9 @@
 				/* try to prevent wrong paste */
 				if ( kdCode == 86 ) {
 					if ( e.type == 'keydown' || e.type == 'keypress' ) {
-						this.valuePartsBeforePaste = this.getBeforeAfterStriped();
+						if ( this.valuePartsBeforePaste === undefined ) {
+							this.valuePartsBeforePaste = this.getBeforeAfterStriped();
+						}
 					} else {
 						this.checkPaste();
 					}
@@ -560,14 +562,14 @@
 			}).keyup(function(e){/* start keyup event routine */
 				var formatted = holder.formatted;
 				holder.init(e);
-				if ( holder.skipAllways(e) ) {
-					holder.kdCode = 0;
-					return true;
-				}
+				
+				var skip = holder.skipAllways(e);
 				holder.kdCode = 0;
-				if ( this.value === '' ) {
-					return true;
-				}
+				delete holder.valuePartsBeforePaste;
+				
+				if ( skip )              { return true; }
+				if ( this.value === '' ) { return true; }
+				
 				if ( !holder.formatted ) {
 					holder.formatQuick();
 				}
