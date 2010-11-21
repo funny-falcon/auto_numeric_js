@@ -94,14 +94,12 @@
 		/* if vMax is not present then it calculates from mNum and mDec */
 		/*   (if mNum == 4 and mDec == 1 then vMax == 9999.9)           */
 		/* if vMin is not present then it == -vMax when aNeg is present and 0 otherwise */ 
-		if ( !(
-			typeof(io.vMin) === 'number' && typeof(io.vMax) === 'number' ||
-			typeof(io.vMax) !== 'number' && 
+		if ( !(typeof(io.vMin) === 'number' && typeof(io.vMax) === 'number') ||
+			(typeof(io.vMax) !== 'number' && 
 				(typeof(io.mNum) !== 'number' || typeof(io.mDec) !== 'number')
 			) ) {
 			io = $.extend({}, $.fn.autoNumeric.defaults, io);
 		}
-		
 		runCallbacks(io);
 		
 		if ( typeof(io.vMax) !== 'number' ) {
