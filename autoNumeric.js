@@ -119,7 +119,7 @@
 				vmax[0].replace('-','').length,
 				vmin[0].replace('-','').length
 		);
-		if ( io.mDec === null ) {
+		if ( typeof(io.mDec) !== 'number' ) {
 			io.mDec = Math.max(
 				(vmax[1] ? vmax[1] : '').length, 
 				(vmin[1] ? vmin[1] : '').length);
