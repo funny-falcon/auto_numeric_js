@@ -82,28 +82,31 @@
 	        }
 	    }
 	}
+
+	function convertKeyToNumber(io, key) {
+		if ( typeof(io[key]) === 'string' ) { io[key] *= 1; }
+	}
 	
 	function autoCode($this, options){ // function to update the defaults settings
-		var io = $.extend({}, options);
+		var io = $.extend({}, $.fn.autoNumeric.defaults, options);
 		if ( $.metadata ) {
 			io = $.extend(io, $this.metadata());/* consider declared metadata on input */
 		}
 		
-		/* merge with defaults if not all necessary options present     */
-		/* currently vMin and vMax are sufficient                       */
-		/* if vMax is not present then it calculates from mNum and mDec */
-		/*   (if mNum == 4 and mDec == 1 then vMax == 9999.9)           */
-		/* if vMin is not present then it == -vMax when aNeg is present and 0 otherwise */ 
-		if ( !(typeof(io.vMin) === 'number' && typeof(io.vMax) === 'number') ||
-			(typeof(io.vMax) !== 'number' && 
-				(typeof(io.mNum) !== 'number' || typeof(io.mDec) !== 'number')
-			) ) {
-			io = $.extend({}, $.fn.autoNumeric.defaults, io);
-		}
 		runCallbacks(io);
 		
+		convertKeyToNumber(io, 'vMax');
+		convertKeyToNumber(io, 'vMin');
+		convertKeyToNumber(io, 'mNum');
+		convertKeyToNumber(io, 'mDec');
+				
 		if ( typeof(io.vMax) !== 'number' ) {
-			io.vMax = Math.pow( 10, io.mNum ) - Math.pow( 10, -io.mDec );
+			if ( typeof(io.mNum) === 'number' && typeof(io.mDec) === 'number' ) {
+				io.vMax = Math.pow( 10, io.mNum ) - Math.pow( 10, -io.mDec );
+			} else {
+				/* default value for vMax */
+				io.vMax = 999999999.99;
+			}
 		}
 		
 		if ( typeof(io.vMin) !== 'number' ) {
@@ -130,10 +133,6 @@
 			if ( vmin[1] && vmin[1].length > io.mDec ) {
 				io.vMin = vmin.join('.') * 1;
 			}
-		}
-		
-		if ( !io.fDefaultMerged ) {
-			io = $.extend({}, $.fn.autoNumeric.defaults, io);
 		}
 		
 		/* set alternative decimal separator key */
@@ -769,12 +768,11 @@
 		aForm: false,/* atomatically format value in form */
 		mNum: null,/* max number of numerical characters to the left of the decimal */
 		mDec: null,/* max number of decimal places */
-		vMin: -999999999.99,/* minimum possible value */
-		vMax:  999999999.99,/* maximum possible value */
+		vMax: null, /* maximum possible value, default is  999999999.99 */
+		vMin: null, /* minimum possible value, default is -vMax or 0 depending on aNeg */
 		wEmpty: 'empty', /* what display on empty string, could be 'empty', 'zero' or 'sign' */
 		dGroup: 3,/* digital grouping for the thousand separator used in Format */
 		mRound: 'S',/* method used for rounding */
 		aPad: true,/* true= always Pad decimals with zeros, false=does not pad with zeros. If the value is 1000, mDec=2 and aPad=true, the output will be 1000.00, if aPad=false the output will be 1000 (no decimals added) Special Thanks to Jonas Johansson */
-		fDefaultMerged: true /* is just a flag that indicates that defaults are allready merged */
 	};
 })(jQuery);
