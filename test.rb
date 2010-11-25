@@ -42,7 +42,7 @@ template :index do
 			
 		:javascript
 			function applyMeta(){
-				var meta = $('#meta').val();
+				meta = $('#meta').val();
 				meta = eval("("+meta+")");
 				$('#log').html('');
 				$('#number').autoNumeric(meta);
