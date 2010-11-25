@@ -69,9 +69,9 @@
 	/**
 	 * run callbacks in parameters if any
 	 * any parameter could be a callback:
-	 * - a function, which invoked with an element, parameters and this parameter name
+	 * - a function, which invoked with jQuery element, parameters and this parameter name
 	 *   and returns parameter value 
-	 * - a global function name, which called as previous
+	 * - a name of function, attached to $.autoNumeric, which called as previous
 	 * - a css selector recognized by jQuery - value of input is taken as a parameter value
 	 */
 	function runCallbacks($this, io) {
@@ -83,7 +83,7 @@
 	        } else if ( typeof(val) === 'string' ) {
 	            var kind = val.substr(0, 4);
 	            if ( kind == 'fun:' ) {
-	                io[k] = window[val.substr(4)](io, k);
+	                io[k] = $.autoNumeric[val.substr(4)](io, k);
 	            } else if ( kind == 'css:' ) {
 	                io[k] = $(val.substr(4)).val();
 	            }
@@ -736,7 +736,8 @@
 		}
 		return nSign + ivRounded;/* return rounded value */
 	} 
-	$.fn.autoNumeric.Strip = function(ii, options){/* public function that stripes the format and converts decimal seperator to a period */
+	$.autoNumeric = {};
+	$.autoNumeric.Strip = function(ii, options){/* public function that stripes the format and converts decimal seperator to a period */
 		var io = autoCode(autoGet(ii), options);
 		var iv = autoGet(ii).val();
 		iv = autoStrip( iv, io);
@@ -744,7 +745,7 @@
 		if ( iv * 1 === 0 ) { iv = '0'; }
 		return iv;
 	};
-	$.fn.autoNumeric.Format = function(ii, iv, options){/* public function that recieves a numeric string and formats to the target input field */
+	$.autoNumeric.Format = function(ii, iv, options){/* public function that recieves a numeric string and formats to the target input field */
 		iv += '';/* to string */
 		var io = autoCode(autoGet(ii), options);
 		iv = autoRound(iv, io.mDec, io.mRound, io.aPad);
@@ -758,7 +759,7 @@
 	$.fn.autoNumericSet = function(iv, options){
 		return this.val($.fn.autoNumeric.Format(this, iv, options)); 
 	};
-	$.fn.autoNumeric.defaults = {/* plugin defaults */
+	$.autoNumeric.defaults = {/* plugin defaults */
 		aNum: '0123456789',/*  allowed  numeric values */
 		aNeg: '',/* allowed negative sign / character */
 		aSep: ',',/* allowed thousand separator character */
@@ -776,4 +777,7 @@
 		mRound: 'S',/* method used for rounding */
 		aPad: true,/* true= always Pad decimals with zeros, false=does not pad with zeros. If the value is 1000, mDec=2 and aPad=true, the output will be 1000.00, if aPad=false the output will be 1000 (no decimals added) Special Thanks to Jonas Johansson */
 	};
+	$.fn.autoNumeric.defaults = $.autoNumeric.defaults;
+	$.fn.autoNumeric.Strip = $.autoNumeric.Strip;
+	$.fn.autoNumeric.Format = $.autoNumeric.Format;
 })(jQuery);
