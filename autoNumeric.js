@@ -72,12 +72,12 @@
 	        var val = io[k];
 	        if ( typeof(val) === 'function' ) {
 	            io[k] = val(io, k);
-	        } else if ( typeof(val) === 'string' && val.match(/^eval:/) ) {
-	            var val = eval(val.substr(5));
-	            if ( typeof(val) === 'function') {
-	                io[k] = val(io, k);
-	            } else {
-	                io[k] = val;
+	        } else if ( typeof(val) === 'string' ) {
+	            var kind = val.substr(0, 4);
+	            if ( kind == 'fun:' ) {
+	                io[k] = window[val.substr(4)](io, k);
+	            } else if ( kind == 'css:' ) {
+	                io[k] = $(val.substr(4)).val();
 	            }
 	        }
 	    }
