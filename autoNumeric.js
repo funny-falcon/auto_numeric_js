@@ -148,21 +148,27 @@
 	}
 	
 	function autoStrip(s, io, strip_zero){
+		/* remove currency sign */
 		if ( io.aSign ) {
 			while( s.indexOf( io.aSign ) > -1 ) {
 				s = s.replace( io.aSign, '' );
 			}
 		}
-		/* remove any uninterested characters */
+		var aNegReg = io.aNeg ? '(\\' + io.aNeg + '?)' : '()';
+		/* first replace anything before digits */
+		var skip_first = [aNegReg, '[^\\', io.aDec, '\\d].*?(\\d|\\', io.aDec, '\\d)'].join('');
+		s = s.replace(new RegExp(skip_first), '$1$2');
+		/* then remove any uninterested characters */
 		var allowed = io.aNeg + io.aNum + io.aDec;
 		if ( io.altDec ) { allowed += io.altDec; }
 		allowed = new RegExp('[^' + allowed + ']','gi');
 		s = s.replace(allowed, '');
 		if ( io.altDec ) { s = s.replace(io.altDec, io.aDec); }
 		/* get only number string */
-		var num_reg = new RegExp( (io.aNeg ? io.aNeg+'?' : '') + '\\d*' + (io.aDec ? '(?:\\'+io.aDec+'\\d*)?' : ''));
-		var m = s.match(num_reg);
-		s = m ? m[0] : '';
+		var num_reg = [aNegReg, '(?:\\', io.aDec, '?(\\d+\\', io.aDec,
+		                '\\d+)|(\\d*(?:\\', io.aDec, '\\d*)?))'].join('');
+		var m = s.match(new RegExp( num_reg ));
+		s = m ? [m[1], m[2], m[3]].join('') : '';
 		/* strip zero if need */
 		if ( strip_zero ) {
 			var strip_reg = '^(' + (io.aNeg ? io.aNeg+'?' : '') + ')0*(\\d' +
@@ -179,9 +185,13 @@
 			/* truncate decimal part to satisfying length */
 			/* cause we would round it anyway */
 			if ( parts[1] && parts[1].length > mDec ) {
-				parts[1] = parts[1].substring(0, mDec);
+				if ( mDec > 0 ) {
+					parts[1] = parts[1].substring(0, mDec);
+					s = parts.join(aDec);
+				} else {
+					s = parts[0];
+				}
 			}
-			s = parts.join(aDec);
 		}
 		return s;
 	}
