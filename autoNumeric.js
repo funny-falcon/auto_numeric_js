@@ -126,13 +126,6 @@
 			io.mDec = Math.max(
 				(vmax[1] ? vmax[1] : '').length, 
 				(vmin[1] ? vmin[1] : '').length);
-		} else {
-			if ( vmax[1] && vmax[1].length > io.mDec ) {
-				io.vMax = vmax.join('.') * 1;
-			}
-			if ( vmin[1] && vmin[1].length > io.mDec ) {
-				io.vMin = vmin.join('.') * 1;
-			}
 		}
 		
 		/* set alternative decimal separator key */
