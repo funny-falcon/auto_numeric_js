@@ -66,7 +66,15 @@
 		}
 	}
 	
-	function runCallbacks(io) {
+	/**
+	 * run callbacks in parameters if any
+	 * any parameter could be a callback:
+	 * - a function, which invoked with an element, parameters and this parameter name
+	 *   and returns parameter value 
+	 * - a global function name, which called as previous
+	 * - a css selector recognized by jQuery - value of input is taken as a parameter value
+	 */
+	function runCallbacks($this, io) {
 	    var k;
 	    for( k in io ) {
 	        var val = io[k];
@@ -93,7 +101,7 @@
 			io = $.extend(io, $this.metadata());/* consider declared metadata on input */
 		}
 		
-		runCallbacks(io);
+		runCallbacks($this, io);
 		
 		convertKeyToNumber(io, 'vMax');
 		convertKeyToNumber(io, 'vMin');
