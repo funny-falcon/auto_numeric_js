@@ -271,11 +271,17 @@
 			}
 			return [left, right];
 		},
-		getBeforeAfterStriped: function() {
+		getBeforeAfter: function() {
 			var value = this.value;
-			var left = autoStrip(value.substring(0, this.selection.start), this.io);
-			var right = autoStrip(value.substring(this.selection.end, value.length), this.io);
+			var left = value.substring(0, this.selection.start);
+			var right = value.substring(this.selection.end, value.length);
 			return [left, right];
+		},
+		getBeforeAfterStriped: function() {
+			var parts = this.getBeforeAfter();
+			parts[0] = autoStrip(parts[0], this.io);
+			parts[1] = autoStrip(parts[1], this.io);
+			return parts;
 		},
 		setValueParts: function(left, right) {
 			var io = this.io;
@@ -352,9 +358,12 @@
 		},
 		checkPaste: function() {
 			if ( this.valuePartsBeforePaste !== undefined ) {
-				var parts = this.getBeforeAfterStriped();
+				var parts = this.getBeforeAfter();
 				var oldParts = this.valuePartsBeforePaste;
 				delete this.valuePartsBeforePaste;
+				/* try to strip pasted value first */
+				parts[0] = parts[0].substr(0, oldParts[0].length) +
+				           autoStrip(parts[0].substr(oldParts[0].length), this.io);
 				if ( !this.setValueParts(parts[0], parts[1]) ) {
 					this.value = oldParts.join('');
 					this.setPosition( oldParts[0].length, false );
@@ -364,10 +373,8 @@
 		skipAllways: function(e) {
 			var kdCode = this.kdCode, which = this.which, cmdKey = this.cmdKey;
 			/* catch the ctrl up on ctrl-v */
-			if ( kdCode == 17 && e.type == 'keyup' ) {
-				if ( this.valuePartsBeforePaste !== undefined ) {
-					this.checkPaste(); 
-				}
+			if ( kdCode == 17 && e.type == 'keyup' && this.valuePartsBeforePaste !== undefined ) {
+				this.checkPaste(); 
 				return false;
 			}
 			/* codes are taken from http://www.cambiaresearch.com/c4/702b8cd1-e5b0-42e6-83ac-25f0306e3e25/Javascript-Char-Codes-Key-Codes.aspx */
@@ -392,7 +399,7 @@
 				if ( kdCode == 86 ) {
 					if ( e.type == 'keydown' || e.type == 'keypress' ) {
 						if ( this.valuePartsBeforePaste === undefined ) {
-							this.valuePartsBeforePaste = this.getBeforeAfterStriped();
+							this.valuePartsBeforePaste = this.getBeforeAfter();
 						}
 					} else {
 						this.checkPaste();
