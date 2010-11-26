@@ -155,7 +155,7 @@
 		}
 		var aNegReg = io.aNeg ? '(\\' + io.aNeg + '?)' : '()';
 		/* first replace anything before digits */
-		var skip_first = [aNegReg, '[^\\', io.aDec, '\\d].*?(\\d|\\', io.aDec, '\\d)'].join('');
+		var skip_first = [aNegReg, '[^\\', io.aNeg, '\\', io.aDec, '\\d].*?(\\d|\\', io.aDec, '\\d)'].join('');
 		s = s.replace(new RegExp(skip_first), '$1$2');
 		/* then remove any uninterested characters */
 		var allowed = io.aNeg + io.aNum + io.aDec;
