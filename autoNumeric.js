@@ -112,8 +112,7 @@
 			if ( typeof(io.mNum) === 'number' && typeof(io.mDec) === 'number' ) {
 				io.vMax = Math.pow( 10, io.mNum ) - Math.pow( 10, -io.mDec );
 			} else {
-				/* default value for vMax */
-				io.vMax = 999999999.99;
+				io.vMax = io.vMaxDefault;
 			}
 		}
 		
@@ -787,7 +786,8 @@
 		aForm: false,/* atomatically format value in form */
 		mNum: null,/* max number of numerical characters to the left of the decimal */
 		mDec: null,/* max number of decimal places */
-		vMax: null, /* maximum possible value, default is  999999999.99 */
+		vMax: null, /* maximum possible value, default is vMaxDefault */
+		vMaxDefault: 999999999.99, /* real default for vMax  */
 		vMin: null, /* minimum possible value, default is -vMax or 0 depending on aNeg */
 		wEmpty: 'empty', /* what display on empty string, could be 'empty', 'zero' or 'sign' */
 		dGroup: 3,/* digital grouping for the thousand separator used in Format */
