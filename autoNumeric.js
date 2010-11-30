@@ -103,32 +103,20 @@
 		
 		runCallbacks($this, io);
 		
+		var vmax = io.vMax.toString().split('.');
+		var vmin = io.vMin == null ? [] : io.vMin.toString().split('.');
+		
 		convertKeyToNumber(io, 'vMax');
 		convertKeyToNumber(io, 'vMin');
-		convertKeyToNumber(io, 'mNum');
 		convertKeyToNumber(io, 'mDec');
-				
-		if ( typeof(io.vMax) !== 'number' ) {
-			if ( typeof(io.mNum) === 'number' && typeof(io.mDec) === 'number' ) {
-				io.vMax = Math.pow( 10, io.mNum ) - Math.pow( 10, -io.mDec );
-			} else {
-				io.vMax = io.vMaxDefault;
-			}
-		}
 		
-		if ( typeof(io.vMin) !== 'number' ) {
+		if ( io.vMin == null ) {
 			io.vMin = io.aNeg ? -io.vMax : 0;
 		}
 
 		if ( io.vMin < 0 && !io.aNeg ) { io.aNeg = '-';}
 
-		/* set nNum and mDec */
-		var vmax = io.vMax.toString().split('.');
-		var vmin = io.vMin.toString().split('.');
-		io.mNum = Math.max(
-				vmax[0].replace('-','').length,
-				vmin[0].replace('-','').length
-		);
+		/* set mDec */
 		if ( typeof(io.mDec) !== 'number' ) {
 			io.mDec = Math.max(
 				(vmax[1] ? vmax[1] : '').length, 
@@ -784,10 +772,8 @@
 		aSign: '',/* allowed currency symbol */
 		pSign: 'p',/* placement of currency sign prefix or suffix */
 		aForm: false,/* atomatically format value in form */
-		mNum: null,/* max number of numerical characters to the left of the decimal */
 		mDec: null,/* max number of decimal places */
-		vMax: null, /* maximum possible value, default is vMaxDefault */
-		vMaxDefault: 999999999.99, /* real default for vMax  */
+		vMax: '999999999.99', /* maximum possible value (hint: use string if you want preserve trailing spaces) */
 		vMin: null, /* minimum possible value, default is -vMax or 0 depending on aNeg */
 		wEmpty: 'empty', /* what display on empty string, could be 'empty', 'zero' or 'sign' */
 		dGroup: 3,/* digital grouping for the thousand separator used in Format */
