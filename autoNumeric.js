@@ -131,6 +131,25 @@
 				io.altDec = '.';
 			}
 		}
+		
+		/* cache regexps for autoStrip */
+		var aNegReg = io.aNeg ? '(\\' + io.aNeg + '?)' : '()';
+		io._aNegReg = aNegReg;
+		io._skipFirst = new RegExp(
+			aNegReg + '[^\\' + io.aNeg + '\\' + io.aDec + 
+				'\\d].*?(\\d|\\' + io.aDec + '\\d)'
+		);
+		io._skipLast = new RegExp(
+			aNegReg + '(\\d\\' + io.aDec + '?)[^\\' + io.aDec + '\\d]\\D*$'
+		);
+		var allowed = io.aNeg + io.aNum + io.aDec;
+		if ( io.altDec ) { allowed += io.altDec; }
+		io._allowed = new RegExp('[^' + allowed + ']','gi');
+		io._numReg = new RegExp(
+			aNegReg + '(?:\\' + io.aDec + '?(\\d+\\' + io.aDec + 
+				'\\d+)|(\\d*(?:\\' + io.aDec + '\\d*)?))'
+		);
+		
 		return io;
 	}
 	
@@ -141,27 +160,19 @@
 				s = s.replace( io.aSign, '' );
 			}
 		}
-		var aNegReg = io.aNeg ? '(\\' + io.aNeg + '?)' : '()';
 		/* first replace anything before digits */
-		var skip_first = [aNegReg, '[^\\', io.aNeg, '\\', io.aDec, '\\d].*?(\\d|\\', io.aDec, '\\d)'].join('');
-		s = s.replace(new RegExp(skip_first), '$1$2');
+		s = s.replace(io._skipFirst, '$1$2');
 		/* then replace anything after digits */
-		var skip_last = [aNegReg, '(\\d\\', io.aDec, '?)[^\\', io.aDec, '\\d]\\D*$'].join('');
-		s = s.replace(new RegExp(skip_last), '$1');
+		s = s.replace(io._skipLast, '$1');
 		/* then remove any uninterested characters */
-		var allowed = io.aNeg + io.aNum + io.aDec;
-		if ( io.altDec ) { allowed += io.altDec; }
-		allowed = new RegExp('[^' + allowed + ']','gi');
-		s = s.replace(allowed, '');
+		s = s.replace(io._allowed, '');
 		if ( io.altDec ) { s = s.replace(io.altDec, io.aDec); }
 		/* get only number string */
-		var num_reg = [aNegReg, '(?:\\', io.aDec, '?(\\d+\\', io.aDec,
-		                '\\d+)|(\\d*(?:\\', io.aDec, '\\d*)?))'].join('');
-		var m = s.match(new RegExp( num_reg ));
+		var m = s.match(io._numReg);
 		s = m ? [m[1], m[2], m[3]].join('') : '';
 		/* strip zero if need */
 		if ( strip_zero ) {
-			var strip_reg = '^(' + (io.aNeg ? io.aNeg+'?' : '') + ')0*(\\d' +
+			var strip_reg = '^' + io._aNegReg + '0*(\\d' +
 				(strip_zero === 'leading' ? ')' : '|$)');
 			strip_reg = new RegExp(strip_reg);
 			s = s.replace( strip_reg, '$1$2');
@@ -280,7 +291,7 @@
 			var new_value = left + right;
 			/* insert zero if has leading dot */
 			if ( io.aDec ) {
-				var m = new_value.match(new RegExp('^(\\D?)\\' + io.aDec)); 
+				var m = new_value.match(new RegExp('^'+ io._aNegReg +'\\' + io.aDec)); 
 				if ( m ) {
 					left = left.replace(m[1], m[1]+'0');
 					new_value = left + right;
@@ -304,14 +315,14 @@
 			return false;
 		},
 		signPosition: function() {
-			var io = this.io, aSign = io.aSign;
+			var io = this.io, aSign = io.aSign, that=this.that;
 			if ( aSign ) {
 				var aSignLen = aSign.length;
 				if ( io.pSign == 'p' ) {
 					var hasNeg = io.aNeg && that.value && that.value.charAt(0) == io.aNeg
 					return hasNeg ? [1, aSignLen + 1] : [0, aSignLen];
 				} else {
-					var valueLen = this.that.value.length;
+					var valueLen = that.value.length;
 					return [valueLen - aSignLen, valueLen] 
 				}
 			} else {
