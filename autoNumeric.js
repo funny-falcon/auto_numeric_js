@@ -145,6 +145,9 @@
 		/* first replace anything before digits */
 		var skip_first = [aNegReg, '[^\\', io.aNeg, '\\', io.aDec, '\\d].*?(\\d|\\', io.aDec, '\\d)'].join('');
 		s = s.replace(new RegExp(skip_first), '$1$2');
+		/* then replace anything after digits */
+		var skip_last = [aNegReg, '(\\d\\', io.aDec, '?)[^\\', io.aDec, '\\d]\\D*$'].join('');
+		s = s.replace(new RegExp(skip_last), '$1');
 		/* then remove any uninterested characters */
 		var allowed = io.aNeg + io.aNum + io.aDec;
 		if ( io.altDec ) { allowed += io.altDec; }
