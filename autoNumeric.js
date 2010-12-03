@@ -75,8 +75,7 @@
 	 * - a css selector recognized by jQuery - value of input is taken as a parameter value
 	 */
 	function runCallbacks($this, io) {
-	    var k;
-	    for( k in io ) {
+	    $.each(io, function(k, val) {
 	        var val = io[k];
 	        if ( typeof(val) === 'function' ) {
 	            io[k] = val(io, k);
@@ -88,7 +87,7 @@
 	                io[k] = $(val.substr(4)).val();
 	            }
 	        }
-	    }
+	    });
 	}
 
 	function convertKeyToNumber(io, key) {
