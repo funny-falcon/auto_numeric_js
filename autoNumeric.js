@@ -653,23 +653,13 @@
 			else {
 				iv = s;/* if whole numers only */
 			}
-			if (iv.indexOf('-') !== -1 && io.aSign !== '' && io.pSign == 'p'){/* places the currency sign to the left (prefix) */
-				iv = iv.replace('-', '');
-				return '-' + io.aSign + iv;
+			if ( io.aSign != '' ) {
+				var has_aNeg = iv.indexOf(io.aNeg) !== -1;
+				iv = iv.replace(io.aNeg, '');
+				iv = io.pSign == 'p' ? io.aSign + iv : iv + io.aSign;
+				if ( has_aNeg ) iv = io.aNeg + iv;
 			}
-			else if (iv.indexOf('-') == -1  && io.aSign !== '' && io.pSign == 'p'){
-				return io.aSign + iv;
-			}
-			if (iv.indexOf('-') !== -1 && io.aSign !== '' && io.pSign == 's'){/* places the currency sign to the right (suffix) */
-				iv = iv.replace('-', '');
-				return '-'+ iv + io.aSign;
-			}
-			else if (iv.indexOf('-') == -1  && io.aSign !== '' && io.pSign == 's'){
-				return iv + io.aSign;
-			}
-			else {
-				return iv;
-			}
+			return iv;
 	}
 	function autoRound(iv, mDec, mRound, aPad){/* private function for round the number - please note this handled as text - Javascript math function can return inaccurate values */
 		iv = (iv === '') ? '0' : iv += ''; /* value to string */
