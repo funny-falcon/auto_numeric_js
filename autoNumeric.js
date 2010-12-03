@@ -75,19 +75,23 @@
 	 * - a css selector recognized by jQuery - value of input is taken as a parameter value
 	 */
 	function runCallbacks($this, io) {
-	    $.each(io, function(k, val) {
-	        var val = io[k];
-	        if ( typeof(val) === 'function' ) {
-	            io[k] = val(io, k);
-	        } else if ( typeof(val) === 'string' ) {
-	            var kind = val.substr(0, 4);
-	            if ( kind == 'fun:' ) {
-	                io[k] = $.autoNumeric[val.substr(4)](io, k);
-	            } else if ( kind == 'css:' ) {
-	                io[k] = $(val.substr(4)).val();
-	            }
-	        }
-	    });
+		$.each(io, function(k, val) {
+			if ( typeof(val) === 'function' ) {
+				io[k] = val(io, k);
+			} else if ( typeof(val) === 'string' ) {
+				var kind = val.substr(0, 4);
+				if ( kind == 'fun:' ) {
+					var fun = $.autoNumeric[val.substr(4)];
+					if ( typeof(fun) === 'function' ) {
+						io[k] = $.autoNumeric[val.substr(4)](io, k);
+					} else {
+						io[k] = null;
+					}
+				} else if ( kind == 'css:' ) {
+					io[k] = $(val.substr(4)).val();
+				}
+			}
+		});
 	}
 
 	function convertKeyToNumber(io, key) {
@@ -103,13 +107,13 @@
 		runCallbacks($this, io);
 		
 		var vmax = io.vMax.toString().split('.');
-		var vmin = io.vMin == null ? [] : io.vMin.toString().split('.');
+		var vmin = (!io.vMin && io.vMin !== 0) ? [] : io.vMin.toString().split('.');
 		
 		convertKeyToNumber(io, 'vMax');
 		convertKeyToNumber(io, 'vMin');
 		convertKeyToNumber(io, 'mDec');
 		
-		if ( io.vMin == null ) {
+		if ( !io.vMin && io.vMin !== 0 ) {
 			io.vMin = io.aNeg ? -io.vMax : 0;
 		}
 
@@ -296,7 +300,7 @@
 					new_value = left + right;
 				}
 			}
-			if ( io.wEmpty == 'zero' && (new_value == io.aNeg || new_value == '') ) {
+			if ( io.wEmpty == 'zero' && (new_value == io.aNeg || new_value === '') ) {
 				left += '0';
 			}
 			new_value = left + right;
@@ -318,11 +322,11 @@
 			if ( aSign ) {
 				var aSignLen = aSign.length;
 				if ( io.pSign == 'p' ) {
-					var hasNeg = io.aNeg && that.value && that.value.charAt(0) == io.aNeg
+					var hasNeg = io.aNeg && that.value && that.value.charAt(0) == io.aNeg;
 					return hasNeg ? [1, aSignLen + 1] : [0, aSignLen];
 				} else {
 					var valueLen = that.value.length;
-					return [valueLen - aSignLen, valueLen] 
+					return [valueLen - aSignLen, valueLen];
 				}
 			} else {
 				return [1000, -1];
@@ -428,12 +432,12 @@
 			return false;
 		},
 		processAllways: function() {
-			var that = this.that, 
-				selection = this.selection,
+			var selection = this.selection,
 				kdCode = this.kdCode;
+			var parts;
 			if ( kdCode == 8 || kdCode == 46 ) { /* process backspace or delete */
-				if ( selection.length == 0 ) {
-					var parts = this.getBeforeAfterStriped();
+				if ( !selection.length ) {
+					parts = this.getBeforeAfterStriped();
 					if ( kdCode == 8 ) {
 						parts[0] = parts[0].substring(0, parts[0].length-1);
 					} else {
@@ -442,7 +446,7 @@
 					this.setValueParts( parts[0], parts[1] );
 				} else {
 					this.expandSelectionOnSign(false);
-					var parts = this.getBeforeAfterStriped();
+					parts = this.getBeforeAfterStriped();
 					this.setValueParts( parts[0], parts[1] );
 				}
 				return true;
@@ -451,14 +455,13 @@
 		},
 		processKeypress: function() {
 			var io = this.io;
-			var that = this.that;
 			var cCode = String.fromCharCode(this.which);
 			var parts = this.getBeforeAfterStriped();
 			var left = parts[0], right = parts[1];
 			/* start rules when the decimal charactor key is pressed */
 			if (cCode == io.aDec || (io.altDec && cCode == io.altDec) ){
 				/* do not allow decimal character if no decimal part allowed */
-				if ( io.mDec == 0 || !io.aDec ) { return true; } 
+				if ( !io.mDec || !io.aDec ) { return true; } 
 				/* do not allow decimal character before aNeg character */
 				if ( io.aNeg && right.indexOf(io.aNeg) > -1 ) { return true; } 
 				 /* do not allow decimal character if other decimal character present */
@@ -474,7 +477,7 @@
 			if (cCode == '-' || cCode == '+') {
 				if ( !io.aNeg ) { return true; } /* prevent minus if not allowed */
 				/* carret is always after minus */
-				if ( left == '' && right.indexOf(io.aNeg) > -1 ) {
+				if ( left === '' && right.indexOf(io.aNeg) > -1 ) {
 					left = io.aNeg;
 					right = right.substring(1, right.length);
 				}
@@ -490,7 +493,7 @@
 			/* digits */
 			if (cCode >= '0' && cCode <= '9') {
 				/* if try to insert digit before minus */
-				if ( io.aNeg && left == '' && right.indexOf(io.aNeg) > -1 ) {
+				if ( io.aNeg && left === '' && right.indexOf(io.aNeg) > -1 ) {
 					left = io.aNeg;
 					right = right.substring(1, right.length);
 				}
@@ -507,7 +510,7 @@
 			var position = value.length;
 			if ( value ) {
 				var left_ar = parts[0].split('');
-				for( i in left_ar ) {
+				for( var i in left_ar ) {
 					if ( left_ar[i] === '.' ) { left_ar[i] = '\\.'; }
 				}
 				var leftReg = new RegExp('^.*?'+ left_ar.join('.*?'));
@@ -515,7 +518,7 @@
 				if ( newLeft ) {
 					position = newLeft[0].length;
 					/* if we are just before prefix sign */
-					if ( (position == 0 && value.charAt(0) != io.aNeg || 
+					if ( (position === 0 && value.charAt(0) != io.aNeg || 
 						  position == 1 && value.charAt(0) == io.aNeg) &&
 						  io.aSign && io.pSign == 'p' ) {
 						/* place carret after prefix sign */
@@ -538,7 +541,7 @@
 			var iv = $(this);/* check input value iv */
 			var holder = new autoNumericHolder(this, options);
 
-			if ( holder.io.aForm && (this.value != '' || holder.io.wEmpty != 'empty') ) {
+			if ( holder.io.aForm && (this.value || holder.io.wEmpty != 'empty') ) {
 				iv.autoNumericSet(iv.autoNumericGet(options), options);
 			}
 			
@@ -554,7 +557,7 @@
 					e.preventDefault();
 					return false;
 				} else {
-					holder.formatted = false
+					holder.formatted = false;
 				}
 				return true;
 			}).keypress(function(e){/* start keypress  event*/
@@ -572,10 +575,9 @@
 					e.preventDefault();
 					return false;
 				} else {
-					holder.formatted = false
+					holder.formatted = false;
 				}
 			}).keyup(function(e){/* start keyup event routine */
-				var formatted = holder.formatted;
 				holder.init(e);
 				
 				var skip = holder.skipAllways(e);
@@ -600,8 +602,8 @@
 						value = '';
 					}
 				}
-				iv.val( autoGroup(value, io) )
-			}) //.bind('paste', function(){setTimeout(function(){autoCheck(iv, holder.io);}, 0); });/* thanks to Josh of Digitalbush.com Opera does not fire paste event*/
+				iv.val( autoGroup(value, io) );
+			});//.bind('paste', function(){setTimeout(function(){autoCheck(iv, holder.io);}, 0); });/* thanks to Josh of Digitalbush.com Opera does not fire paste event*/
 		});
 	};
 	function autoGet(obj) {/* thanks to Anthony & Evan C */
@@ -614,7 +616,7 @@
 
 	function autoGroup(iv, io){/* private function that places the thousand separtor */
 			iv = autoStrip( iv, io );
-			if ( iv == '' || iv == io.aNeg ) {
+			if ( iv === '' || iv == io.aNeg ) {
 				if ( io.wEmpty == 'zero' ) {
 					return iv + '0';
 				} else if ( io.wEmpty == 'sign' ) {
@@ -652,11 +654,11 @@
 			else {
 				iv = s;/* if whole numers only */
 			}
-			if ( io.aSign != '' ) {
+			if ( io.aSign ) {
 				var has_aNeg = iv.indexOf(io.aNeg) !== -1;
 				iv = iv.replace(io.aNeg, '');
 				iv = io.pSign == 'p' ? io.aSign + iv : iv + io.aSign;
-				if ( has_aNeg ) iv = io.aNeg + iv;
+				if ( has_aNeg ) { iv = io.aNeg + iv; }
 			}
 			return iv;
 	}
@@ -781,7 +783,7 @@
 		wEmpty: 'empty', /* what display on empty string, could be 'empty', 'zero' or 'sign' */
 		dGroup: 3,/* digital grouping for the thousand separator used in Format */
 		mRound: 'S',/* method used for rounding */
-		aPad: true,/* true= always Pad decimals with zeros, false=does not pad with zeros. If the value is 1000, mDec=2 and aPad=true, the output will be 1000.00, if aPad=false the output will be 1000 (no decimals added) Special Thanks to Jonas Johansson */
+		aPad: true/* true= always Pad decimals with zeros, false=does not pad with zeros. If the value is 1000, mDec=2 and aPad=true, the output will be 1000.00, if aPad=false the output will be 1000 (no decimals added) Special Thanks to Jonas Johansson */
 	};
 	$.fn.autoNumeric.defaults = $.autoNumeric.defaults;
 	$.fn.autoNumeric.Strip = $.autoNumeric.Strip;
