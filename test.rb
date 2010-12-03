@@ -12,7 +12,7 @@ template :index do
 %html
 	%head
 		%script(type="text/javascript" src='jquery-1.4.3.js')
-		%script(type="text/javascript" src='autoNumeric.js?#{reload_n+=1}')
+		%script(type="text/javascript" src='autoNumeric.min.js?#{reload_n+=1}')
 		:css
 			#number {text-align: right}
 			label {display: block}
