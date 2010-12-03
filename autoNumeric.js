@@ -2,7 +2,7 @@
  * autoNumeric.js
  * @author: Bob Knothe
  * @author: Sokolov Yura aka funny_falcon
- * @version: 1.6.3?
+ * @version: 1.7.0
  *
  * Created by Robert J. Knothe on 2010-10-25. Please report any bug at http://www.decorplanit.com/plugin/
  * Created by Sokolov Yura on 2010-11-07. http://github.com/funny_falcon
