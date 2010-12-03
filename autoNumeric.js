@@ -229,6 +229,139 @@
 		return value >= io.vMin && value <= io.vMax;
 	}
 	
+	function autoGroup(iv, io){/* private function that places the thousand separtor */
+		iv = autoStrip( iv, io );
+		if ( iv === '' || iv == io.aNeg ) {
+			if ( io.wEmpty == 'zero' ) {
+				return iv + '0';
+			} else if ( io.wEmpty == 'sign' ) {
+				return iv + io.aSign;
+			} else {
+				return iv;
+			}
+		}
+		var digitalGroup = '';
+		if (io.dGroup == 2){
+			digitalGroup = /(\d)((\d)(\d{2}?)+)$/;
+		}
+		else if (io.dGroup == 4){
+			digitalGroup = /(\d)((\d{4}?)+)$/;
+		}
+		else {
+			digitalGroup = /(\d)((\d{3}?)+)$/;
+		}
+		var ivSplit = iv.split(io.aDec);/* splits the string at the decimal string */
+		if ( io.altDec && ivSplit.length == 1 ) {
+			ivSplit = iv.split(io.altDec);
+		}
+		var s = ivSplit[0];/* assigns the whole number to the a varibale (s) */
+		if ( io.aSep ) {
+			while(digitalGroup.test(s)){ 
+				s = s.replace(digitalGroup, '$1'+io.aSep+'$2');/*  re-inserts the thousand sepparator via a regualer expression */
+			}
+		}
+		if (io.mDec !== 0 && ivSplit.length > 1){
+			if ( ivSplit[1].length > io.mDec ) {
+				ivSplit[1] = ivSplit[1].substring(0, io.mDec);
+			}
+			iv = s + io.aDec + ivSplit[1];/* joins the whole number with the deciaml value */
+		}
+		else {
+			iv = s;/* if whole numers only */
+		}
+		if ( io.aSign ) {
+			var has_aNeg = iv.indexOf(io.aNeg) !== -1;
+			iv = iv.replace(io.aNeg, '');
+			iv = io.pSign == 'p' ? io.aSign + iv : iv + io.aSign;
+			if ( has_aNeg ) { iv = io.aNeg + iv; }
+		}
+		return iv;
+	}
+	
+	function autoRound(iv, mDec, mRound, aPad){/* private function for round the number - please note this handled as text - Javascript math function can return inaccurate values */
+		iv = (iv === '') ? '0' : iv += ''; /* value to string */
+		var ivRounded = '';
+		var i = 0;
+		var nSign = ''; 
+		if (iv.charAt(0) == '-'){/* Checks if the iv (input Value)is a negative value */
+		nSign = (iv * 1 === 0) ? '' : '-';/* determines if the value is zero - if zero no negative sign */
+			iv = iv.replace('-', '');/* removes the negative sign will be added back later if required */
+		}
+		if ((iv * 1) > 0){/* trims leading zero's if needed */
+			while (iv.substr(0,1) == '0' && iv.length > 1) { 
+				iv = iv.substr(1);
+			}
+		}
+		var dPos = iv.lastIndexOf('.');/* decimal postion as an integer */
+		if (dPos === 0){/* prefix with a zero if the decimal point is the first character */
+			iv = '0' + iv;
+			dPos = 1;
+		}
+		if (dPos == -1 || dPos == iv.length - 1){/* Has an integer been passed in? */
+			if (aPad && mDec > 0) {
+				ivRounded = (dPos == -1) ? iv + '.' : iv;
+				for(i = 0; i < mDec; i++){/* pads with zero */
+						ivRounded += '0';
+				}
+				return nSign + ivRounded;
+			}
+			else {
+				return nSign + iv;
+			}
+		}
+		var cDec = (iv.length - 1) - dPos;/* checks decimal places to determine if rounding is required */
+		if (cDec == mDec){
+			return nSign + iv;/* If true return value no rounding required */
+		}
+		if (cDec < mDec && aPad){/* Do we already have less than the number of decimal places we want? */
+			ivRounded = iv;/* If so, pad out with zeros */
+			for(i = cDec; i < mDec; i++){
+				ivRounded += '0';
+			}
+			return nSign + ivRounded;
+		}
+		var rLength = dPos + mDec;/* rounded length of the string after rounding  */
+		var tRound = iv.charAt(rLength + 1) * 1;/* test round */
+		var ivArray = [];/* new array*/
+		for(i = 0; i <= rLength; i++){/* populate ivArray with each digit in rLength */
+			ivArray[i] = iv.charAt(i);
+		}
+		var odd = (iv.charAt(rLength) == '.') ? (iv.charAt(rLength - 1) % 2) : (iv.charAt(rLength) % 2);
+		if ((tRound > 4 && mRound === 'S') ||/* Round half up symetric */
+			(tRound > 4 && mRound === 'A' && nSign === '') ||/* Round half up asymetric positive values */
+			(tRound > 5 && mRound === 'A' && nSign == '-') ||/* Round half up asymetric negative values */
+			(tRound > 5 && mRound === 's') ||/* Round half down symetric */
+			(tRound > 5 && mRound === 'a' && nSign === '') ||/* Round half down asymetric positive values */
+			(tRound > 4 && mRound === 'a' && nSign == '-') ||/* Round half down asymetric negative values */
+			(tRound > 5 && mRound === 'B') ||/* Round half even "Banker's Rounding" */
+			(tRound == 5 && mRound === 'B' && odd == 1) ||/* Round half even "Banker's Rounding" */
+			(tRound > 0 && mRound === 'C' && nSign === '') ||/* Round to ceiling toward positive infinite */
+			(tRound > 0 && mRound === 'F' && nSign == '-') ||/* Round to floor toward negative inifinte */
+			(tRound > 0 && mRound === 'U')){/* round up away from zero  */
+			for(i = (ivArray.length - 1); i >= 0; i--){/* Round up the last digit if required, and continue until no more 9's are found */
+				if (ivArray[i] == '.'){
+					continue;
+				}
+				ivArray[i]++;
+				if (ivArray[i] < 10){/* if i does not equal 10 no more round up required */
+					break;
+				}
+			}
+		}
+		for (i=0; i <= rLength; i++){/* Reconstruct the string, converting any 10's to 0's */
+			if (ivArray[i] == '.' || ivArray[i] < 10 || i === 0){/* routine to reconstruct non '10' */
+				ivRounded += ivArray[i];
+			}
+			else {/* converts 10's to 0 */
+				ivRounded += '0';
+			}
+		}
+		if (mDec === 0){/* If there are no decimal places, we don't need a decimal point */
+			ivRounded = ivRounded.replace('.', '');
+		}
+		return nSign + ivRounded;/* return rounded value */
+	}
+	
 	function autoNumericHolder (that, options){
 		this.options = options;
 		this.that = that;
@@ -606,6 +739,7 @@
 			});//.bind('paste', function(){setTimeout(function(){autoCheck(iv, holder.io);}, 0); });/* thanks to Josh of Digitalbush.com Opera does not fire paste event*/
 		});
 	};
+	
 	function autoGet(obj) {/* thanks to Anthony & Evan C */
 		if (typeof(obj) == 'string') {
 		  obj = obj.replace(/\[/g, "\\[").replace(/\]/g, "\\]");
@@ -613,138 +747,7 @@
 		}
 		return $(obj);
 	}
-
-	function autoGroup(iv, io){/* private function that places the thousand separtor */
-			iv = autoStrip( iv, io );
-			if ( iv === '' || iv == io.aNeg ) {
-				if ( io.wEmpty == 'zero' ) {
-					return iv + '0';
-				} else if ( io.wEmpty == 'sign' ) {
-					return iv + io.aSign;
-				} else {
-					return iv;
-				}
-			}
-			var digitalGroup = '';
-			if (io.dGroup == 2){
-				digitalGroup = /(\d)((\d)(\d{2}?)+)$/;
-			}
-			else if (io.dGroup == 4){
-				digitalGroup = /(\d)((\d{4}?)+)$/;
-			}
-			else {
-				digitalGroup = /(\d)((\d{3}?)+)$/;
-			}
-			var ivSplit = iv.split(io.aDec);/* splits the string at the decimal string */
-			if ( io.altDec && ivSplit.length == 1 ) {
-				ivSplit = iv.split(io.altDec);
-			}
-			var s = ivSplit[0];/* assigns the whole number to the a varibale (s) */
-			if ( io.aSep ) {
-				while(digitalGroup.test(s)){ 
-					s = s.replace(digitalGroup, '$1'+io.aSep+'$2');/*  re-inserts the thousand sepparator via a regualer expression */
-				}
-			}
-			if (io.mDec !== 0 && ivSplit.length > 1){
-				if ( ivSplit[1].length > io.mDec ) {
-					ivSplit[1] = ivSplit[1].substring(0, io.mDec);
-				}
-				iv = s + io.aDec + ivSplit[1];/* joins the whole number with the deciaml value */
-			}
-			else {
-				iv = s;/* if whole numers only */
-			}
-			if ( io.aSign ) {
-				var has_aNeg = iv.indexOf(io.aNeg) !== -1;
-				iv = iv.replace(io.aNeg, '');
-				iv = io.pSign == 'p' ? io.aSign + iv : iv + io.aSign;
-				if ( has_aNeg ) { iv = io.aNeg + iv; }
-			}
-			return iv;
-	}
-	function autoRound(iv, mDec, mRound, aPad){/* private function for round the number - please note this handled as text - Javascript math function can return inaccurate values */
-		iv = (iv === '') ? '0' : iv += ''; /* value to string */
-		var ivRounded = '';
-		var i = 0;
-		var nSign = ''; 
-		if (iv.charAt(0) == '-'){/* Checks if the iv (input Value)is a negative value */
-		nSign = (iv * 1 === 0) ? '' : '-';/* determines if the value is zero - if zero no negative sign */
-			iv = iv.replace('-', '');/* removes the negative sign will be added back later if required */
-		}
-		if ((iv * 1) > 0){/* trims leading zero's if needed */
-			while (iv.substr(0,1) == '0' && iv.length > 1) { 
-				iv = iv.substr(1);
-			}
-		}
-		var dPos = iv.lastIndexOf('.');/* decimal postion as an integer */
-		if (dPos === 0){/* prefix with a zero if the decimal point is the first character */
-			iv = '0' + iv;
-			dPos = 1;
-		}
-		if (dPos == -1 || dPos == iv.length - 1){/* Has an integer been passed in? */
-			if (aPad && mDec > 0) {
-				ivRounded = (dPos == -1) ? iv + '.' : iv;
-				for(i = 0; i < mDec; i++){/* pads with zero */
-						ivRounded += '0';
-				}
-				return nSign + ivRounded;
-			}
-			else {
-				return nSign + iv;
-			}
-		}
-		var cDec = (iv.length - 1) - dPos;/* checks decimal places to determine if rounding is required */
-		if (cDec == mDec){
-			return nSign + iv;/* If true return value no rounding required */
-		}
-		if (cDec < mDec && aPad){/* Do we already have less than the number of decimal places we want? */
-			ivRounded = iv;/* If so, pad out with zeros */
-			for(i = cDec; i < mDec; i++){
-				ivRounded += '0';
-			}
-			return nSign + ivRounded;
-		}
-		var rLength = dPos + mDec;/* rounded length of the string after rounding  */
-		var tRound = iv.charAt(rLength + 1) * 1;/* test round */
-		var ivArray = [];/* new array*/
-		for(i = 0; i <= rLength; i++){/* populate ivArray with each digit in rLength */
-			ivArray[i] = iv.charAt(i);
-		}
-		var odd = (iv.charAt(rLength) == '.') ? (iv.charAt(rLength - 1) % 2) : (iv.charAt(rLength) % 2);
-		if ((tRound > 4 && mRound === 'S') ||/* Round half up symetric */
-			(tRound > 4 && mRound === 'A' && nSign === '') ||/* Round half up asymetric positive values */
-			(tRound > 5 && mRound === 'A' && nSign == '-') ||/* Round half up asymetric negative values */
-			(tRound > 5 && mRound === 's') ||/* Round half down symetric */
-			(tRound > 5 && mRound === 'a' && nSign === '') ||/* Round half down asymetric positive values */
-			(tRound > 4 && mRound === 'a' && nSign == '-') ||/* Round half down asymetric negative values */
-			(tRound > 5 && mRound === 'B') ||/* Round half even "Banker's Rounding" */
-			(tRound == 5 && mRound === 'B' && odd == 1) ||/* Round half even "Banker's Rounding" */
-			(tRound > 0 && mRound === 'C' && nSign === '') ||/* Round to ceiling toward positive infinite */
-			(tRound > 0 && mRound === 'F' && nSign == '-') ||/* Round to floor toward negative inifinte */
-			(tRound > 0 && mRound === 'U')){/* round up away from zero  */
-			for(i = (ivArray.length - 1); i >= 0; i--){/* Round up the last digit if required, and continue until no more 9's are found */
-				if (ivArray[i] == '.'){
-					continue;
-				}
-				ivArray[i]++;
-				if (ivArray[i] < 10){/* if i does not equal 10 no more round up required */
-					break;
-				}
-			}
-		}
-		for (i=0; i <= rLength; i++){/* Reconstruct the string, converting any 10's to 0's */
-			if (ivArray[i] == '.' || ivArray[i] < 10 || i === 0){/* routine to reconstruct non '10' */
-				ivRounded += ivArray[i];
-			}
-			else {/* converts 10's to 0 */
-				ivRounded += '0';
-			}
-		}
-		if (mDec === 0){/* If there are no decimal places, we don't need a decimal point */
-			ivRounded = ivRounded.replace('.', '');
-		}
-		return nSign + ivRounded;/* return rounded value */
-	} 
+	
 	$.autoNumeric = {};
 	$.autoNumeric.Strip = function(ii, options){/* public function that stripes the format and converts decimal seperator to a period */
 		var io = autoCode(autoGet(ii), options);
