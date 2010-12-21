@@ -139,11 +139,12 @@
 		var aNegReg = io.aNeg ? '(\\' + io.aNeg + '?)' : '()';
 		io._aNegReg = aNegReg;
 		io._skipFirst = new RegExp(
-			aNegReg + '[^\\' + io.aNeg + '\\' + io.aDec + 
-				'\\d].*?(\\d|\\' + io.aDec + '\\d)'
+			aNegReg + '[^' + (io.aNeg ? '\\' + io.aNeg : '' )
+			        + '\\' + io.aDec + '\\d]'
+			        + '.*?(\\d|\\' + io.aDec + '\\d)'
 		);
 		io._skipLast = new RegExp(
-			aNegReg + '(\\d\\' + io.aDec + '?)[^\\' + io.aDec + '\\d]\\D*$'
+			'(\\d\\' + io.aDec + '?)[^\\' + io.aDec + '\\d]\\D*$'
 		);
 		var allowed = io.aNeg + io.aNum + io.aDec;
 		if ( io.altDec ) { allowed += io.altDec; }
