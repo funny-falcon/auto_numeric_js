@@ -35,6 +35,9 @@
  */
 
 (function($) {
+	/**
+	 * Cross browser routin for getting selected range/cursor position
+	 */
 	function getElementSelection(that) {
 		var position = {};
 		if ( that.selectionStart === undefined ) { /* IE Support to find the caret position */
@@ -51,7 +54,9 @@
 		}
 		return position;
 	}
-	
+	/**
+	 * Cross browser routin for setting selected range/cursor position
+	 */
 	function setElementSelection(that, start, end){
 		if ( that.selectionStart === undefined ) {
 			that.focus();
@@ -98,6 +103,10 @@
 		if ( typeof(io[key]) === 'string' ) { io[key] *= 1; }
 	}
 	
+	/**
+	 * Preparing user defined options for further usage
+	 * merge them with defaults appropriatly
+	 */
 	function autoCode($this, options){ // function to update the defaults settings
 		var io = $.extend({}, $.fn.autoNumeric.defaults, options);
 		if ( $.metadata ) {
@@ -112,14 +121,10 @@
 		convertKeyToNumber(io, 'vMax');
 		convertKeyToNumber(io, 'vMin');
 		convertKeyToNumber(io, 'mDec');
-		
-		if ( !io.vMin && io.vMin !== 0 ) {
-			io.vMin = io.aNeg ? -io.vMax : 0;
-		}
 
-		if ( io.vMin < 0 && !io.aNeg ) { io.aNeg = '-';}
+		io.aNeg = io.vMin < 0 ? '-' : '';
 
-		/* set mDec */
+		/* set mDec, if not defained by user */
 		if ( typeof(io.mDec) !== 'number' ) {
 			io.mDec = Math.max(
 				(vmax[1] ? vmax[1] : '').length, 
@@ -139,11 +144,12 @@
 		var aNegReg = io.aNeg ? '(\\' + io.aNeg + '?)' : '()';
 		io._aNegReg = aNegReg;
 		io._skipFirst = new RegExp(
-			aNegReg + '[^\\' + io.aNeg + '\\' + io.aDec + 
-				'\\d].*?(\\d|\\' + io.aDec + '\\d)'
+			aNegReg + '[^' + (io.aNeg ? '\\' + io.aNeg : '' )
+			        + '\\' + io.aDec + '\\d]'
+			        + '.*?(\\d|\\' + io.aDec + '\\d)'
 		);
 		io._skipLast = new RegExp(
-			aNegReg + '(\\d\\' + io.aDec + '?)[^\\' + io.aDec + '\\d]\\D*$'
+			'(\\d\\' + io.aDec + '?)[^\\' + io.aDec + '\\d]\\D*$'
 		);
 		var allowed = io.aNeg + io.aNum + io.aDec;
 		if ( io.altDec ) { allowed += io.altDec; }
@@ -156,6 +162,9 @@
 		return io;
 	}
 	
+	/**
+	 * strip all unwanted characters and leave only a number
+	 */
 	function autoStrip(s, io, strip_zero){
 		/* remove currency sign */
 		if ( io.aSign ) {
@@ -183,6 +192,9 @@
 		return s;
 	}
 	
+	/**
+	 * truncate decimal part of a number
+	 */
 	function truncateDecimal( s, aDec, mDec ) {
 		if ( aDec && mDec ) {
 			var parts = s.split(aDec);
@@ -200,6 +212,9 @@
 		return s;
 	}
 	
+	/**
+	 * prepare number string to be converted to real number
+	 */
 	function fixNumber(s, aDec, aNeg) {
 		if ( aDec && aDec !== '.' ) {
 			s = s.replace(aDec, '.');
@@ -211,6 +226,9 @@
 		return s;
 	}
 	
+	/**
+	 * prepare real number to be converted to our format
+	 */
 	function presentNumber(s, aDec, aNeg) {
 		if ( aNeg && aNeg !== '-' ) {
 			s = s.replace('-', aNeg);
@@ -221,6 +239,10 @@
 		return s;
 	}
 	
+	/**
+	 * checking that number satisfy format conditions
+	 * and lays between io.vMin and io.vMax
+	 */
 	function autoCheck(s, io){
 		s = autoStrip(s, io);
 		s = truncateDecimal(s, io.aDec, io.mDec);
@@ -229,6 +251,9 @@
 		return value >= io.vMin && value <= io.vMax;
 	}
 	
+	/**
+	 * formatting our number
+	 */
 	function autoGroup(iv, io){/* private function that places the thousand separtor */
 		iv = autoStrip( iv, io );
 		if ( iv === '' || iv == io.aNeg ) {
@@ -278,6 +303,9 @@
 		return iv;
 	}
 	
+	/**
+	 * round number after setting by pasting or $().autoNumericSet()
+	 */
 	function autoRound(iv, mDec, mRound, aPad){/* private function for round the number - please note this handled as text - Javascript math function can return inaccurate values */
 		iv = (iv === '') ? '0' : iv += ''; /* value to string */
 		var ivRounded = '';
@@ -362,7 +390,10 @@
 		return nSign + ivRounded;/* return rounded value */
 	}
 	
-	function autoNumericHolder (that, options){
+	/**
+	 * Holder object for field properties 
+	 */
+	function autoNumericHolder(that, options){
 		this.options = options;
 		this.that = that;
 		this.$that = $(that);
@@ -378,6 +409,7 @@
 			this.cmdKey = e.metaKey;
 			this.shiftKey = e.shiftKey;
 			this.selection = getElementSelection(this.that);
+			/* keypress event overwrites meaningfull value of e.keyCode */
 			if ( e.type == 'keydown' || e.type == 'keyup' ) {
 				this.kdCode = e.keyCode;
 			}
@@ -385,6 +417,7 @@
 			this.processed = false;
 			this.formatted = false;
 		},
+		
 		setSelection: function(start, end, setReal) {
 			start = Math.max(start, 0);
 			end = Math.min(end, this.that.value.length);
@@ -393,20 +426,6 @@
 		},
 		setPosition: function(pos, setReal) {
 			this.setSelection(pos, pos, setReal);
-		},
-		normalizeParts: function(left, right) {
-			var io = this.io;
-			right = autoStrip(right, io);
-			/* if right is not empty and first character is not aDec, we could strip all zeros */
-			/* otherwise only leading */
-			var strip = right.match(/^\d/) ? true : 'leading';
-			left = autoStrip(left, io, strip);
-			if ( (left === '' || left === io.aNeg) ) {
-				if ( right > '' ) {
-					right = right.replace(/^0*(\d)/,'$1');
-				}
-			}
-			return [left, right];
 		},
 		getBeforeAfter: function() {
 			var value = this.value;
@@ -420,10 +439,22 @@
 			parts[1] = autoStrip(parts[1], this.io);
 			return parts;
 		},
-		setValueParts: function(left, right) {
+		/**
+		 * strip parts from excess characters and leading zeroes
+		 */
+		normalizeParts: function(left, right) {
 			var io = this.io;
-			var parts = this.normalizeParts(left, right);
-			left = parts[0]; right = parts[1];
+			right = autoStrip(right, io);
+			/* if right is not empty and first character is not aDec, */
+			/* we could strip all zeros, otherwise only leading */
+			var strip = right.match(/^\d/) ? true : 'leading';
+			left = autoStrip(left, io, strip);
+			/* strip leading zeros from right part if left part has no digits */
+			if ( (left === '' || left === io.aNeg) ) {
+				if ( right > '' ) {
+					right = right.replace(/^0*(\d)/,'$1');
+				}
+			}
 			var new_value = left + right;
 			/* insert zero if has leading dot */
 			if ( io.aDec ) {
@@ -433,11 +464,20 @@
 					new_value = left + right;
 				}
 			}
+			/* insert zero if number is empty and io.wEmpty == 'zero' */
 			if ( io.wEmpty == 'zero' && (new_value == io.aNeg || new_value === '') ) {
 				left += '0';
 			}
-			new_value = left + right;
-			var position = left.length;
+			return [left, right];
+		},
+		/**
+		 * set part of number to value keeping position of cursor
+		 */
+		setValueParts: function(left, right) {
+			var io = this.io;
+			var parts = this.normalizeParts(left, right);
+			var new_value = parts.join('');
+			var position = parts[0].length;
 			
 			if ( autoCheck(new_value, io) ) {
 				new_value = truncateDecimal( new_value, io.aDec, io.mDec );
@@ -450,6 +490,10 @@
 			}
 			return false;
 		},
+		/**
+		 * helper function for expandSelectionOnSign
+		 * returns sign position of a formatted value
+		 */
 		signPosition: function() {
 			var io = this.io, aSign = io.aSign, that=this.that;
 			if ( aSign ) {
@@ -465,7 +509,10 @@
 				return [1000, -1];
 			}
 		},
-		/* if selection touches sign, expand it to cover whole sign */
+		/**
+		 * expands selection to cover whole sign
+		 * prevents partial deletion/copying/overwritting of a sign
+		 */
 		expandSelectionOnSign: function(setReal) {
 			var sign_position = this.signPosition();
 			var selection = this.selection;
@@ -493,6 +540,9 @@
 				}
 			}
 		},
+		/**
+		 * try to strip pasted value to digits
+		 */
 		checkPaste: function() {
 			if ( this.valuePartsBeforePaste !== undefined ) {
 				var parts = this.getBeforeAfter();
@@ -507,6 +557,10 @@
 				}
 			}
 		},
+		/**
+		 * process pasting, cursor moving and skipping of not interesting keys
+		 * if returns true, futher processing is not performed
+		 */
 		skipAllways: function(e) {
 			var kdCode = this.kdCode, which = this.which, cmdKey = this.cmdKey;
 			/* catch the ctrl up on ctrl-v */
@@ -564,14 +618,16 @@
 			}
 			return false;
 		},
+		/**
+		 * process deletion of characters
+		 * returns true if processing performed
+		 */
 		processAllways: function() {
-			var selection = this.selection,
-				kdCode = this.kdCode;
 			var parts;
-			if ( kdCode == 8 || kdCode == 46 ) { /* process backspace or delete */
-				if ( !selection.length ) {
+			if ( this.kdCode == 8 || this.kdCode == 46 ) { /* process backspace or delete */
+				if ( !this.selection.length ) {
 					parts = this.getBeforeAfterStriped();
-					if ( kdCode == 8 ) {
+					if ( this.kdCode == 8 ) {
 						parts[0] = parts[0].substring(0, parts[0].length-1);
 					} else {
 						parts[1] = parts[1].substring(1, parts[1].length);
@@ -586,6 +642,10 @@
 			}
 			return false;
 		},
+		/**
+		 * process insertion of characters
+		 * returns true if processing performed
+		 */
 		processKeypress: function() {
 			var io = this.io;
 			var cCode = String.fromCharCode(this.which);
@@ -636,21 +696,27 @@
 			/* prevent any other character */
 			return true;
 		},
+		/**
+		 * formatting of just processed value with keeping of cursor position
+		 */
 		formatQuick: function() {
 			var io = this.io;
 			var parts = this.getBeforeAfterStriped();
 			var value = autoGroup( this.value, this.io );
 			var position = value.length;
 			if ( value ) {
+				/* prepare regexp which searches for cursor position 
+				   from unformatted left part */
 				var left_ar = parts[0].split('');
 				for( var i in left_ar ) {
 					if ( left_ar[i] === '.' ) { left_ar[i] = '\\.'; }
 				}
 				var leftReg = new RegExp('^.*?'+ left_ar.join('.*?'));
+				/* search cursor position in formatted value */
 				var newLeft = value.match(leftReg);
 				if ( newLeft ) {
 					position = newLeft[0].length;
-					/* if we are just before prefix sign */
+					/* if we are just before sign which is in prefix position */
 					if ( (position === 0 && value.charAt(0) != io.aNeg || 
 						  position == 1 && value.charAt(0) == io.aNeg) &&
 						  io.aSign && io.pSign == 'p' ) {
@@ -658,6 +724,7 @@
 						position = this.io.aSign.length + (value.charAt(0) == '-' ? 1 : 0 );
 					}
 				} else if ( io.aSign && io.pSign == 's' ) {
+					/* if we could not find a place for cursor and have a sign as a suffix */
 					/* place carret before suffix currency sign */
 					position -= io.aSign.length;
 				}
@@ -749,7 +816,10 @@
 	}
 	
 	$.autoNumeric = {};
-	$.autoNumeric.Strip = function(ii, options){/* public function that stripes the format and converts decimal seperator to a period */
+	/**
+	 * public function that stripes the format and converts decimal seperator to a period
+	 */
+	$.autoNumeric.Strip = function(ii, options){
 		var io = autoCode(autoGet(ii), options);
 		var iv = autoGet(ii).val();
 		iv = autoStrip( iv, io);
@@ -757,7 +827,10 @@
 		if ( iv * 1 === 0 ) { iv = '0'; }
 		return iv;
 	};
-	$.autoNumeric.Format = function(ii, iv, options){/* public function that recieves a numeric string and formats to the target input field */
+	/**
+	 * public function that recieves a numeric string and formats to the target input field
+	 */
+	$.autoNumeric.Format = function(ii, iv, options){
 		iv += '';/* to string */
 		var io = autoCode(autoGet(ii), options);
 		iv = autoRound(iv, io.mDec, io.mRound, io.aPad);
@@ -765,29 +838,39 @@
 		if ( !autoCheck(iv, io) ) { iv = ''; }
 		return autoGroup(iv, io);
 	};
+	/**
+	 * get a number (as a number) from a field
+	 * $('input#my').autoNumericGet()
+	 * $('input#my').autoNumericGet({aSign: '$', pSign: 'p'})
+	 */
 	$.fn.autoNumericGet = function(options){
-		return $.fn.autoNumeric.Strip(this, options); 
+		return $.fn.autoNumeric.Strip(this, options);
 	};
+	/**
+	 * set a number to a field, formatting it appropriatly
+	 * $('input#my').autoNumericSet(2.423)
+	 * $('input#my').autoNumericSet(2.423, {aSign: '$', pSign: 'p'})
+	 */
 	$.fn.autoNumericSet = function(iv, options){
 		return this.val($.fn.autoNumeric.Format(this, iv, options)); 
 	};
 	$.autoNumeric.defaults = {/* plugin defaults */
 		aNum: '0123456789',/*  allowed  numeric values */
-		aNeg: '',/* allowed negative sign / character */
 		aSep: ',',/* allowed thousand separator character */
 		aDec: '.',/* allowed decimal separator character */
-		altDec: null,/* allow to replace alternative dec */
+		altDec: null,/* allow to declare alternative decimal separator which is automatically replaced by aDec */
 		aSign: '',/* allowed currency symbol */
 		pSign: 'p',/* placement of currency sign prefix or suffix */
 		aForm: false,/* atomatically format value in form */
 		mDec: null,/* max number of decimal places */
 		vMax: '999999999.99', /* maximum possible value (hint: use string if you want preserve trailing spaces) */
-		vMin: null, /* minimum possible value, default is -vMax or 0 depending on aNeg */
+		vMin: '0.00', /* minimum possible value */
 		wEmpty: 'empty', /* what display on empty string, could be 'empty', 'zero' or 'sign' */
 		dGroup: 3,/* digital grouping for the thousand separator used in Format */
 		mRound: 'S',/* method used for rounding */
 		aPad: true/* true= always Pad decimals with zeros, false=does not pad with zeros. If the value is 1000, mDec=2 and aPad=true, the output will be 1000.00, if aPad=false the output will be 1000 (no decimals added) Special Thanks to Jonas Johansson */
 	};
+	/* deprecated way to access defaults and helper functions */
 	$.fn.autoNumeric.defaults = $.autoNumeric.defaults;
 	$.fn.autoNumeric.Strip = $.autoNumeric.Strip;
 	$.fn.autoNumeric.Format = $.autoNumeric.Format;
