@@ -112,12 +112,8 @@
 		convertKeyToNumber(io, 'vMax');
 		convertKeyToNumber(io, 'vMin');
 		convertKeyToNumber(io, 'mDec');
-		
-		if ( !io.vMin && io.vMin !== 0 ) {
-			io.vMin = io.aNeg ? -io.vMax : 0;
-		}
 
-		if ( io.vMin < 0 && !io.aNeg ) { io.aNeg = '-';}
+		io.aNeg = io.vMin < 0 ? '-' : '';
 
 		/* set mDec */
 		if ( typeof(io.mDec) !== 'number' ) {
@@ -781,7 +777,6 @@
 	};
 	$.autoNumeric.defaults = {/* plugin defaults */
 		aNum: '0123456789',/*  allowed  numeric values */
-		aNeg: '',/* allowed negative sign / character */
 		aSep: ',',/* allowed thousand separator character */
 		aDec: '.',/* allowed decimal separator character */
 		altDec: null,/* allow to replace alternative dec */
@@ -790,7 +785,7 @@
 		aForm: false,/* atomatically format value in form */
 		mDec: null,/* max number of decimal places */
 		vMax: '999999999.99', /* maximum possible value (hint: use string if you want preserve trailing spaces) */
-		vMin: null, /* minimum possible value, default is -vMax or 0 depending on aNeg */
+		vMin: '0.00', /* minimum possible value */
 		wEmpty: 'empty', /* what display on empty string, could be 'empty', 'zero' or 'sign' */
 		dGroup: 3,/* digital grouping for the thousand separator used in Format */
 		mRound: 'S',/* method used for rounding */
