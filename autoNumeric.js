@@ -395,20 +395,6 @@
 		setPosition: function(pos, setReal) {
 			this.setSelection(pos, pos, setReal);
 		},
-		normalizeParts: function(left, right) {
-			var io = this.io;
-			right = autoStrip(right, io);
-			/* if right is not empty and first character is not aDec, we could strip all zeros */
-			/* otherwise only leading */
-			var strip = right.match(/^\d/) ? true : 'leading';
-			left = autoStrip(left, io, strip);
-			if ( (left === '' || left === io.aNeg) ) {
-				if ( right > '' ) {
-					right = right.replace(/^0*(\d)/,'$1');
-				}
-			}
-			return [left, right];
-		},
 		getBeforeAfter: function() {
 			var value = this.value;
 			var left = value.substring(0, this.selection.start);
@@ -421,10 +407,22 @@
 			parts[1] = autoStrip(parts[1], this.io);
 			return parts;
 		},
-		setValueParts: function(left, right) {
+		/**
+		 * strip parts from excess characters and leading zeroes
+		 */
+		normalizeParts: function(left, right) {
 			var io = this.io;
-			var parts = this.normalizeParts(left, right);
-			left = parts[0]; right = parts[1];
+			right = autoStrip(right, io);
+			/* if right is not empty and first character is not aDec, */
+			/* we could strip all zeros, otherwise only leading */
+			var strip = right.match(/^\d/) ? true : 'leading';
+			left = autoStrip(left, io, strip);
+			/* strip leading zeros from right part if left part has no digits */
+			if ( (left === '' || left === io.aNeg) ) {
+				if ( right > '' ) {
+					right = right.replace(/^0*(\d)/,'$1');
+				}
+			}
 			var new_value = left + right;
 			/* insert zero if has leading dot */
 			if ( io.aDec ) {
@@ -434,11 +432,20 @@
 					new_value = left + right;
 				}
 			}
+			/* insert zero if number is empty and io.wEmpty == 'zero' */
 			if ( io.wEmpty == 'zero' && (new_value == io.aNeg || new_value === '') ) {
 				left += '0';
 			}
-			new_value = left + right;
-			var position = left.length;
+			return [left, right];
+		},
+		/**
+		 * set part of number to value keeping position of cursor
+		 */
+		setValueParts: function(left, right) {
+			var io = this.io;
+			var parts = this.normalizeParts(left, right);
+			var new_value = parts.join('');
+			var position = parts[0].length;
 			
 			if ( autoCheck(new_value, io) ) {
 				new_value = truncateDecimal( new_value, io.aDec, io.mDec );
