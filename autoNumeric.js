@@ -82,13 +82,13 @@
 	function runCallbacks($this, io) {
 		$.each(io, function(k, val) {
 			if ( typeof(val) === 'function' ) {
-				io[k] = val(io, k);
+				io[k] = val($this, io, k);
 			} else if ( typeof(val) === 'string' ) {
 				var kind = val.substr(0, 4);
 				if ( kind == 'fun:' ) {
 					var fun = $.autoNumeric[val.substr(4)];
 					if ( typeof(fun) === 'function' ) {
-						io[k] = $.autoNumeric[val.substr(4)](io, k);
+						io[k] = $.autoNumeric[val.substr(4)]($this, io, k);
 					} else {
 						io[k] = null;
 					}
