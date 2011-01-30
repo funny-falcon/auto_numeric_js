@@ -141,17 +141,17 @@
 		}
 		
 		/* cache regexps for autoStrip */
-		var aNegReg = io.aNeg ? '(\\' + io.aNeg + '?)' : '()';
+		var aNegReg = io.aNeg ? '([-\\' + io.aNeg + ']?)' : '(-?)';
 		io._aNegReg = aNegReg;
 		io._skipFirst = new RegExp(
-			aNegReg + '[^' + (io.aNeg ? '\\' + io.aNeg : '' )
+			aNegReg + '[^-' + (io.aNeg ? '\\' + io.aNeg : '' )
 			        + '\\' + io.aDec + '\\d]'
 			        + '.*?(\\d|\\' + io.aDec + '\\d)'
 		);
 		io._skipLast = new RegExp(
 			'(\\d\\' + io.aDec + '?)[^\\' + io.aDec + '\\d]\\D*$'
 		);
-		var allowed = io.aNeg + io.aNum + io.aDec;
+		var allowed = (io.aNeg ? io.aNeg : '-') + io.aNum + io.aDec;
 		if ( io.altDec ) { allowed += io.altDec; }
 		io._allowed = new RegExp('[^' + allowed + ']','gi');
 		io._numReg = new RegExp(
@@ -312,7 +312,7 @@
 		var i = 0;
 		var nSign = ''; 
 		if (iv.charAt(0) == '-'){/* Checks if the iv (input Value)is a negative value */
-		nSign = (iv * 1 === 0) ? '' : '-';/* determines if the value is zero - if zero no negative sign */
+			nSign = (iv * 1 === 0) ? '' : '-';/* determines if the value is zero - if zero no negative sign */
 			iv = iv.replace('-', '');/* removes the negative sign will be added back later if required */
 		}
 		if ((iv * 1) > 0){/* trims leading zero's if needed */
@@ -835,7 +835,7 @@
 		var io = autoCode(autoGet(ii), options);
 		iv = autoRound(iv, io.mDec, io.mRound, io.aPad);
 		iv = presentNumber(iv, io.aDec, io.aNeg);
-		if ( !autoCheck(iv, io) ) { iv = ''; }
+		if ( !autoCheck(iv, io) ) { iv = autoRound('', io.mDec, io.mRound, io.aPad); }
 		return autoGroup(iv, io);
 	};
 	/**
