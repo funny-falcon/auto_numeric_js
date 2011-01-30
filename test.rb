@@ -62,7 +62,7 @@ template :index do
 EOF
 end
 
-default_params = { :meta => "{aSep: ' ', aForm: true, mDec: 0}", :number => 1000000, :js => '' }
+default_params = { :meta => "{aSep: ' ', aForm: true, vMin: '-999999999.99'}", :number => 1000000, :js => '' }
 get '/' do
   haml :index, :locals => default_params
 end
