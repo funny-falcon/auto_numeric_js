@@ -151,8 +151,8 @@
 		io._skipLast = new RegExp(
 			'(\\d\\' + io.aDec + '?)[^\\' + io.aDec + '\\d]\\D*$'
 		);
-		var allowed = (io.aNeg ? io.aNeg : '-') + io.aNum + io.aDec;
-		if ( io.altDec ) { allowed += io.altDec; }
+		var allowed = (io.aNeg ? io.aNeg : '-') + io.aNum + '\\' + io.aDec;
+		if ( io.altDec && io.altDec != io.aSep ) { allowed += io.altDec; }
 		io._allowed = new RegExp('[^' + allowed + ']','gi');
 		io._numReg = new RegExp(
 			aNegReg + '(?:\\' + io.aDec + '?(\\d+\\' + io.aDec + 
@@ -709,7 +709,7 @@
 				   from unformatted left part */
 				var left_ar = parts[0].split('');
 				for( var i in left_ar ) {
-					if ( left_ar[i] === '.' ) { left_ar[i] = '\\.'; }
+					if ( !left_ar[i].match('\\d') ) { left_ar[i] = '\\'+left_ar[i]; }
 				}
 				var leftReg = new RegExp('^.*?'+ left_ar.join('.*?'));
 				/* search cursor position in formatted value */
