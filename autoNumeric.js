@@ -652,7 +652,8 @@
 			var parts = this.getBeforeAfterStriped();
 			var left = parts[0], right = parts[1];
 			/* start rules when the decimal charactor key is pressed */
-			if (cCode == io.aDec || (io.altDec && cCode == io.altDec) ){
+			if (cCode == io.aDec || (io.altDec && cCode == io.altDec) ||
+				((cCode == '.' || cCode == ',') && this.kdCode == 110) ){ /* always use numeric pad dot to insert decimal separator*/
 				/* do not allow decimal character if no decimal part allowed */
 				if ( !io.mDec || !io.aDec ) { return true; } 
 				/* do not allow decimal character before aNeg character */
