@@ -131,15 +131,6 @@
 				(vmin[1] ? vmin[1] : '').length);
 		}
 		
-		/* set alternative decimal separator key */
-		if ( io.altDec === null && io.mDec > 0 ) {
-			if ( io.aDec == '.' && io.aSep != ',' ) {
-				io.altDec = ',';
-			} else if ( io.aDec == ',' && io.aSep != '.' ) {
-				io.altDec = '.';
-			}
-		}
-		
 		/* cache regexps for autoStrip */
 		var aNegReg = io.aNeg ? '([-\\' + io.aNeg + ']?)' : '(-?)';
 		io._aNegReg = aNegReg;
@@ -152,7 +143,6 @@
 			'(\\d\\' + io.aDec + '?)[^\\' + io.aDec + '\\d]\\D*$'
 		);
 		var allowed = (io.aNeg ? io.aNeg : '-') + io.aNum + '\\' + io.aDec;
-		if ( io.altDec && io.altDec != io.aSep ) { allowed += io.altDec; }
 		io._allowed = new RegExp('[^' + allowed + ']','gi');
 		io._numReg = new RegExp(
 			aNegReg + '(?:\\' + io.aDec + '?(\\d+\\' + io.aDec + 
@@ -178,7 +168,6 @@
 		s = s.replace(io._skipLast, '$1');
 		/* then remove any uninterested characters */
 		s = s.replace(io._allowed, '');
-		if ( io.altDec ) { s = s.replace(io.altDec, io.aDec); }
 		/* get only number string */
 		var m = s.match(io._numReg);
 		s = m ? [m[1], m[2], m[3]].join('') : '';
@@ -276,9 +265,6 @@
 			digitalGroup = /(\d)((\d{3}?)+)$/;
 		}
 		var ivSplit = iv.split(io.aDec);/* splits the string at the decimal string */
-		if ( io.altDec && ivSplit.length == 1 ) {
-			ivSplit = iv.split(io.altDec);
-		}
 		var s = ivSplit[0];/* assigns the whole number to the a varibale (s) */
 		if ( io.aSep ) {
 			while(digitalGroup.test(s)){ 
@@ -652,8 +638,7 @@
 			var parts = this.getBeforeAfterStriped();
 			var left = parts[0], right = parts[1];
 			/* start rules when the decimal charactor key is pressed */
-			if (cCode == io.aDec || (io.altDec && cCode == io.altDec) ||
-				((cCode == '.' || cCode == ',') && this.kdCode == 110) ){ /* always use numeric pad dot to insert decimal separator*/
+			if (cCode == io.aDec || ((cCode == '.' || cCode == ',') && this.kdCode == 110) ){ /* always use numeric pad dot to insert decimal separator*/
 				/* do not allow decimal character if no decimal part allowed */
 				if ( !io.mDec || !io.aDec ) { return true; } 
 				/* do not allow decimal character before aNeg character */
@@ -859,7 +844,6 @@
 		aNum: '0123456789',/*  allowed  numeric values */
 		aSep: ',',/* allowed thousand separator character */
 		aDec: '.',/* allowed decimal separator character */
-		altDec: null,/* allow to declare alternative decimal separator which is automatically replaced by aDec */
 		aSign: '',/* allowed currency symbol */
 		pSign: 'p',/* placement of currency sign prefix or suffix */
 		aForm: false,/* atomatically format value in form */
