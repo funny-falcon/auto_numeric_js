@@ -728,7 +728,10 @@
 			var holder = new autoNumericHolder(this, options);
 
 			if ( holder.io.aForm && (this.value || holder.io.wEmpty != 'empty') ) {
-				iv.autoNumericSet(iv.autoNumericGet(options), options);
+				var val = holder.io.aForm == 'aDec' ? 
+					iv.autoNumericGet(options): 
+					iv.val().replace(/[^-+\d\.]/, '');
+				iv.autoNumericSet(val, options);
 			}
 			
 			iv.keydown(function(e){/* start keyDown event */
@@ -846,7 +849,9 @@
 		aDec: '.',/* allowed decimal separator character */
 		aSign: '',/* allowed currency symbol */
 		pSign: 'p',/* placement of currency sign prefix or suffix */
-		aForm: false,/* atomatically format value in form */
+		aForm: true,/* automatically format value. */
+		  /* when aForm set to true, initial value should use a dot as a decimal separator: 1234.56 */
+		  /* when aForm set to 'aDec', initial value should use aDec as a decimal separator: 1234,56 when aDec==',' */ 
 		mDec: null,/* max number of decimal places */
 		vMax: '999999999.99', /* maximum possible value (hint: use string if you want preserve trailing spaces) */
 		vMin: '0.00', /* minimum possible value */
