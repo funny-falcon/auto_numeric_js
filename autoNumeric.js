@@ -804,9 +804,9 @@
 		});
 	};
 	
-	$.fn.autoNumericRestore = function(){
+	$.fn.autoNumericRestore = function(options){
 		return this.each(function(){
-			$(this).val($(this).autoNumericGet('current'));
+			$(this).val($(this).autoNumericGet(options));
 			$(this).data('autoNumericRestore', false);
 		});
 	};
@@ -814,13 +814,13 @@
 	$(window).unload(function() {
 		$('input[type=text], input[type=number]').filter(
 			function(){ return $(this).data('autoNumericRestore'); }
-		).autoNumericRestore();
+		).autoNumericRestore('current');
 	});
 	
 	$('form').live('submit', function() {
 		$(this).find('input[type=text], input[type=number]').filter(
 			function(){ return $(this).data('autoNumericRestore'); }
-		).autoNumericRestore();
+		).autoNumericRestore('current');
 	});
 	
 	function autoGet(obj) {/* thanks to Anthony & Evan C */
