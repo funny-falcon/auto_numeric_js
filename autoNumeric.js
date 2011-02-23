@@ -724,7 +724,6 @@
 		}
 	});
 	
-	
 	$.fn.autoNumeric = function(options) {
 		return this.each(function() {/* iterate and reformat each matched element */
 			var iv = $(this);/* check input value iv */
@@ -805,19 +804,23 @@
 		});
 	};
 	
-	function restoreValue(){
-		if ( $(this).data('autoNumericRestore') ) {
+	$.fn.autoNumericRestore = function(){
+		return this.each(function(){
 			$(this).val($(this).autoNumericGet('current'));
 			$(this).data('autoNumericRestore', false);
-		}
-	}
+		});
+	};
 	
 	$(window).unload(function() {
-		$('input[type=text], input[type=number]').each(restoreValue);
+		$('input[type=text], input[type=number]').filter(
+			function(){ return $(this).data('autoNumericRestore'); }
+		).autoNumericRestore();
 	});
 	
 	$('form').live('submit', function() {
-		$(this).find('input[type=text], input[type=number]').each(restoreValue);
+		$(this).find('input[type=text], input[type=number]').filter(
+			function(){ return $(this).data('autoNumericRestore'); }
+		).autoNumericRestore();
 	});
 	
 	function autoGet(obj) {/* thanks to Anthony & Evan C */
