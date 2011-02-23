@@ -817,6 +817,11 @@
 		).autoNumericRestore('current');
 	});
 	
+	/*
+	 * Restore values on submitting form.
+	 * This will not work for you if you override form.submit() cause it launches after that
+	 * So that, to perform ajax you should use $().autoNumericRestore() before sending data 
+	 */ 
 	$('form').live('submit', function() {
 		$(this).find('input[type=text], input[type=number]').filter(
 			function(){ return $(this).data('autoNumericRestore'); }
