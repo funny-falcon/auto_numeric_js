@@ -108,6 +108,10 @@
 	 * merge them with defaults appropriatly
 	 */
 	function autoCode($this, options){ // function to update the defaults settings
+		if ( options === 'current' ) {
+			options = $this.data('autoNumericOptions');
+		}
+		
 		var io = $.extend({}, $.fn.autoNumeric.defaults, options);
 		if ( $.metadata ) {
 			io = $.extend(io, $this.metadata());/* consider declared metadata on input */
@@ -379,19 +383,18 @@
 	/**
 	 * Holder object for field properties 
 	 */
-	function autoNumericHolder(that, options){
-		this.options = options;
+	function autoNumericHolder(that){
 		this.that = that;
 		this.$that = $(that);
 		this.formatted = false;
-		this.io = autoCode(this.$that, this.options);
+		this.io = autoCode(this.$that, 'current');
 		this.value = that.value;
 	}
 	
 	$.extend(autoNumericHolder.prototype, {
 		init: function(e){
 			this.value = this.that.value;
-			this.io = autoCode(this.$that, this.options);
+			this.io = autoCode(this.$that, 'current');
 			this.cmdKey = e.metaKey;
 			this.shiftKey = e.shiftKey;
 			this.selection = getElementSelection(this.that);
@@ -725,13 +728,19 @@
 	$.fn.autoNumeric = function(options) {
 		return this.each(function() {/* iterate and reformat each matched element */
 			var iv = $(this);/* check input value iv */
-			var holder = new autoNumericHolder(this, options);
+			iv.data('autoNumericOptions', options);
+			var holder = new autoNumericHolder(this);
+			iv.data('autoNumericHolder', this);
 
 			if ( holder.io.aForm && (this.value || holder.io.wEmpty != 'empty') ) {
-				var val = holder.io.aForm == 'aDec' ? 
-					iv.autoNumericGet(options): 
-					iv.val().replace(/[^-+\d\.]/, '');
-				iv.autoNumericSet(val, options);
+				var aValue;
+				if ( holder.io.aForm == true ) {
+					iv.data('autoNumericRestore', true);
+					aValue = iv.val().replace(/[^-+\d\.]/, '');
+				} else {
+					aValue = iv.autoNumericGet('current');
+				}
+				iv.autoNumericSet(aValue, 'current');
 			}
 			
 			iv.keydown(function(e){/* start keyDown event */
@@ -795,6 +804,21 @@
 			});//.bind('paste', function(){setTimeout(function(){autoCheck(iv, holder.io);}, 0); });/* thanks to Josh of Digitalbush.com Opera does not fire paste event*/
 		});
 	};
+	
+	function restoreValue(){
+		if ( $(this).data('autoNumericRestore') ) {
+			$(this).val($(this).autoNumericGet('current'));
+			$(this).data('autoNumericRestore', false);
+		}
+	}
+	
+	$(window).unload(function() {
+		$('input[type=text], input[type=number]').each(restoreValue);
+	});
+	
+	$('form').live('submit', function() {
+		$(this).find('input[type=text], input[type=number]').each(restoreValue);
+	});
 	
 	function autoGet(obj) {/* thanks to Anthony & Evan C */
 		if (typeof(obj) == 'string') {
