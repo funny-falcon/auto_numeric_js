@@ -853,16 +853,18 @@
 	};
 	/**
 	 * get a number (as a number) from a field
-	 * $('input#my').autoNumericGet()
-	 * $('input#my').autoNumericGet({aSign: '$', pSign: 'p'})
+	 * $('input#my').autoNumericGet() - default/metadata settings
+	 * $('input#my').autoNumericGet('current') - current settings
+	 * $('input#my').autoNumericGet({aSign: '$', pSign: 'p'}) - override settings
 	 */
 	$.fn.autoNumericGet = function(options){
 		return $.fn.autoNumeric.Strip(this, options);
 	};
 	/**
 	 * set a number to a field, formatting it appropriatly
-	 * $('input#my').autoNumericSet(2.423)
-	 * $('input#my').autoNumericSet(2.423, {aSign: '$', pSign: 'p'})
+	 * $('input#my').autoNumericSet(2.423) - default/metadata settings
+	 * $('input#my').autoNumericSet(2.423, 'current') - current settings
+	 * $('input#my').autoNumericSet(2.423, {aSign: '$', pSign: 'p'}) - override settings
 	 */
 	$.fn.autoNumericSet = function(iv, options){
 		return this.val($.fn.autoNumeric.Format(this, iv, options)); 
