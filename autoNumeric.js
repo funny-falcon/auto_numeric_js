@@ -449,7 +449,7 @@
 		this.value = that.value;
 	}
 
-	$.extend(autoNumericHolder.prototype, {
+	autoNumericHolder.prototype = {
 		init: function(e){
 			this.value = this.that.value;
 			this.io = autoCode(this.$that, this.options);
@@ -787,7 +787,7 @@
 			this.setPosition( position );
 			this.formatted = true;
 		}
-	});
+	};
 
 	$.fn.autoNumeric = function(options) {
 		return this.each(function() {
@@ -844,8 +844,8 @@
 					holder.formatQuick();
 				}
 			/** start change - thanks to Javier P. corrected the inline onChange event  added focusout version 1.55*/
-			}).bind('change focusout', function(){
-				var io = holder.io, value = iv.val();
+			}).focusout(function(e){
+				var io = holder.io, value = iv.val(), origValue = value;
 				if (value !== ''){
 					value = autoStrip(value, io);
 					if ( autoCheck(value, io) ) {
@@ -856,7 +856,16 @@
 						value = '';
 					}
 				}
-				iv.val( autoGroup(value, io) );
+				var groupedValue = autoGroup(value, io);
+				if ( groupedValue !== origValue ) {
+					iv.val( groupedValue );
+				}
+				if ( groupedValue !== holder.inVal ) {
+					iv.change();
+					delete holder.inVal;
+				}
+			}).focusin(function(e){
+				holder.inVal= iv.val();
 			});
 		});
 	};
