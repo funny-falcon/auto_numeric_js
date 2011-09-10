@@ -12,7 +12,7 @@ template :index do
 %html
 	%head
 		%script(type="text/javascript" src='jquery-1.4.3.js')
-		%script(type="text/javascript" src='autoNumeric.min.js?#{reload_n+=1}')
+		%script(type="text/javascript" src='autoNumeric.\#{params['min'] ? 'min.' : ''}js?#{reload_n+=1}')
 		:css
 			#number {text-align: right}
 			label {display: block}
@@ -21,13 +21,15 @@ template :index do
 		:javascript
 			function log(str) {
 				var spans = $('#log span');
-				for(i=0; i<spans.length - 20; i++){
+				for(i=20; i<spans.length; i++){
 					$(spans[i]).remove();
 				}
-				$('#log').append('<span>'+str+'</span>');
+				$('#log').prepend('<span>'+str+'</span>');
 			}
 	%body
 		%form(method="post")
+			- if params["min"]
+				%input(type="hidden" name="min" value="\#{params['min']}")
 			%p
 				%label(for="meta") options for autoNumeric
 				%textarea#meta(name="meta" cols=60 rows=4)&= meta
@@ -64,12 +66,13 @@ end
 
 default_params = { :meta => "{aSep: ' ', aForm: true, vMin: '-999999999.99'}", :number => 1000000, :js => '' }
 get '/' do
-  haml :index, :locals => default_params
+  haml :index, :locals => default_params.merge(:params => params)
 end
 
 post '/' do
   locals = default_params
   params.each{|k, v| locals[k.to_sym] = v}
+  locals[:params] = params
   haml :index, :locals => locals
 end
 
