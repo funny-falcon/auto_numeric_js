@@ -799,91 +799,102 @@
 		}
 	};
 
+	function getHolder($that, options) {
+		var holder = $that.data('autoNumericHolder');
+		if (holder === undefined) {
+			holder = new autoNumericHolder($that.get(0), options);
+			$that.data('autoNumericHolder', holder);
+		}
+		return holder;
+	}
+
 	$.fn.autoNumeric = function(options) {
 		return this.each(function() {
-			var iv = $(this);
-			var holder = new autoNumericHolder(this, options);
+			var iv = $(this), holder = getHolder(iv, options);
 
 			if ( holder.io.aForm && (this.value || holder.io.wEmpty !== 'empty') ) {
 				iv.autoNumericSet(iv.autoNumericGet(options), options);
 			}
-
-			iv.keydown(function(e){
-				holder.init(e);
-				if ( holder.skipAllways(e) ) {
-					holder.processed = true;
-					return true;
-				}
-				if ( holder.processAllways() ) {
-					holder.processed = true;
-					holder.formatQuick();
-					e.preventDefault();
-					return false;
-				} else {
-					holder.formatted = false;
-				}
+		}).keydown(function(e){
+			var iv = $(e.target), holder = getHolder(iv, options);
+			holder.init(e);
+			if ( holder.skipAllways(e) ) {
+				holder.processed = true;
 				return true;
-			}).keypress(function(e){
-				var processed = holder.processed;
-				holder.init(e);
-				if ( holder.skipAllways(e) ) {
-					return true;
-				}
-				if ( processed ) {
-					e.preventDefault();
-					return false;
-				}
-				if ( holder.processAllways() || holder.processKeypress() ) {
-					holder.formatQuick();
-					e.preventDefault();
-					return false;
+			}
+			if ( holder.processAllways() ) {
+				holder.processed = true;
+				holder.formatQuick();
+				e.preventDefault();
+				return false;
+			} else {
+				holder.formatted = false;
+			}
+			return true;
+		}).keypress(function(e){
+			var iv = $(e.target), holder = getHolder(iv, options);
+			var processed = holder.processed;
+			holder.init(e);
+			if ( holder.skipAllways(e) ) {
+				return true;
+			}
+			if ( processed ) {
+				e.preventDefault();
+				return false;
+			}
+			if ( holder.processAllways() || holder.processKeypress() ) {
+				holder.formatQuick();
+				e.preventDefault();
+				return false;
+			} else {
+				holder.formatted = false;
+			}
+		}).keyup(function(e){
+			var iv = $(e.target), holder = getHolder(iv, options);
+			holder.init(e);
+
+			var skip = holder.skipAllways(e);
+			holder.kdCode = 0;
+			delete holder.valuePartsBeforePaste;
+
+			if ( skip )              { return true; }
+			if ( this.value === '' ) { return true; }
+
+			if ( !holder.formatted ) {
+				holder.formatQuick();
+			}
+		/** start change - thanks to Javier P. corrected the inline onChange event  added focusout version 1.55*/
+		}).focusout(function(e){
+			var iv = $(e.target), holder = getHolder(iv, options);
+			var io = holder.io, value = iv.val(), origValue = value;
+			if (value !== ''){
+				value = autoStrip(value, io);
+				if ( checkEmpty(value, io) === null && autoCheck(value, io) ) {
+					value = fixNumber(value, io.aDec, io.aNeg);
+					value = autoRound(value, io.mDec, io.mRound, io.aPad);
+					value = presentNumber(value, io.aDec, io.aNeg);
 				} else {
-					holder.formatted = false;
+					value = '';
 				}
-			}).keyup(function(e){
-				holder.init(e);
-
-				var skip = holder.skipAllways(e);
-				holder.kdCode = 0;
-				delete holder.valuePartsBeforePaste;
-
-				if ( skip )              { return true; }
-				if ( this.value === '' ) { return true; }
-
-				if ( !holder.formatted ) {
-					holder.formatQuick();
-				}
-			/** start change - thanks to Javier P. corrected the inline onChange event  added focusout version 1.55*/
-			}).focusout(function(e){
-				var io = holder.io, value = iv.val(), origValue = value;
-				if (value !== ''){
-					value = autoStrip(value, io);
-					if ( checkEmpty(value, io) === null && autoCheck(value, io) ) {
-						value = fixNumber(value, io.aDec, io.aNeg);
-						value = autoRound(value, io.mDec, io.mRound, io.aPad);
-						value = presentNumber(value, io.aDec, io.aNeg);
-					} else {
-						value = '';
-					}
-				}
-				var groupedValue = checkEmpty(value, io, false);
-				if ( groupedValue === null ) {
-					groupedValue = autoGroup(value, io);
-				}
-				if ( groupedValue !== origValue ) {
-					iv.val( groupedValue );
-				}
-				if ( groupedValue !== holder.inVal ) {
-					iv.change();
-					delete holder.inVal;
-				}
-			}).focusin(function(e){
-				holder.inVal= iv.val();
-				var onempty = checkEmpty(holder.inVal, holder.io, true);
-				if ( onempty !== null ) {
-					iv.val(onempty);
-				}
-			});
+			}
+			var groupedValue = checkEmpty(value, io, false);
+			if ( groupedValue === null ) {
+				groupedValue = autoGroup(value, io);
+			}
+			if ( groupedValue !== origValue ) {
+				iv.val( groupedValue );
+			}
+			if ( groupedValue !== holder.inVal ) {
+				iv.change();
+				delete holder.inVal;
+			}
+		}).focusin(function(e){
+			var iv = $(e.target), holder = getHolder(iv, options);
+			holder.inVal= iv.val();
+			var onempty = checkEmpty(holder.inVal, holder.io, true);
+			if ( onempty !== null ) {
+				iv.val(onempty);
+			}
 		});
 	};
 	/** thanks to Anthony & Evan C */
