@@ -257,18 +257,28 @@
 		return value >= io.vMin && value <= io.vMax;
 	}
 	/**
-	 * private function that formats our number
+	 * private function to check for empty value
 	 */
-	function autoGroup(iv, io){
-		iv = autoStrip( iv, io );
+	function checkEmpty(iv, io, signOnEmpty){
 		if ( iv === '' || iv === io.aNeg ) {
 			if ( io.wEmpty === 'zero' ) {
 				return iv + '0';
-			} else if ( io.wEmpty === 'sign' ) {
+			} else if ( io.wEmpty === 'sign' || signOnEmpty ) {
 				return iv + io.aSign;
 			} else {
 				return iv;
 			}
+		}
+		return null;
+	}
+	/**
+	 * private function that formats our number
+	 */
+	function autoGroup(iv, io){
+		iv = autoStrip( iv, io );
+		var empty = checkEmpty(iv, io, true);
+		if ( empty !== null ) {
+			return empty;
 		}
 		var digitalGroup = '';
 		if (io.dGroup === 2){
@@ -848,7 +858,7 @@
 				var io = holder.io, value = iv.val(), origValue = value;
 				if (value !== ''){
 					value = autoStrip(value, io);
-					if ( autoCheck(value, io) ) {
+					if ( checkEmpty(value, io) === null && autoCheck(value, io) ) {
 						value = fixNumber(value, io.aDec, io.aNeg);
 						value = autoRound(value, io.mDec, io.mRound, io.aPad);
 						value = presentNumber(value, io.aDec, io.aNeg);
@@ -856,7 +866,10 @@
 						value = '';
 					}
 				}
-				var groupedValue = autoGroup(value, io);
+				var groupedValue = checkEmpty(value, io, false);
+				if ( groupedValue === null ) {
+					groupedValue = autoGroup(value, io);
+				}
 				if ( groupedValue !== origValue ) {
 					iv.val( groupedValue );
 				}
@@ -866,6 +879,10 @@
 				}
 			}).focusin(function(e){
 				holder.inVal= iv.val();
+				var onempty = checkEmpty(holder.inVal, holder.io, true);
+				if ( onempty !== null ) {
+					iv.val(onempty);
+				}
 			});
 		});
 	};
