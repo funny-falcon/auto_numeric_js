@@ -70,6 +70,18 @@
 			that.selectionEnd = end;
 		}
 	}
+
+	/**
+	 * Default updater for options which uses metadata plugin
+	 */
+	function updateOptionsByMetadata($this, io) {
+		if ( $.metadata ) {
+			/** consider declared metadata on input */
+			io = $.extend(io, $this.metadata());
+		}
+		return io;
+	}
+
 	/**
 	 * run callbacks in parameters if any
 	 * any parameter could be a callback:
@@ -119,13 +131,16 @@
 	 * merge them with defaults appropriatly
 	 */
 	function autoCode($this, options){
-		var io = $.extend({}, $.fn.autoNumeric.defaults, options);
-		if ( $.metadata ) {
-			/** consider declared metadata on input */
-			io = $.extend(io, $this.metadata());
-		}
+		var io = $.extend({}, $.autoNumeric.defaults, options);
 
-		runCallbacks($this, io);
+		/** run some callbacks to update options */
+		var updateOptions = io.updateOptions;
+		delete io.updateOptions;
+		$.each(updateOptions, function(_, func) {
+			if ( typeof(func) === 'function' ) {
+				func($this, io);
+			}
+		});
 
 		var vmax = io.vMax.toString().split('.');
 		var vmin = (!io.vMin && io.vMin !== 0) ? [] : io.vMin.toString().split('.');
@@ -1030,8 +1045,22 @@
 		* Please note this is a little buggy due to how each browser handles refresh
 		* use with caution
 		*/
-		aForm: false
+		aForm: false,
+		/** control way to fetch options from metadata
+		 * value is an array of functions, each tacking element and parameters as arguments
+		 * function should update parameters inplace
+		 * Default function:
+		 *   updateOptionsByMetadata - tries to use `metadata` plugin
+		 *   runCallbacks - tries to run callbacks on values
+		 * You could override `updateOptions` in $(element).autoNumeric(options)
+		 * or by changing it in $.autoNumeric.defaults.
+		 * You could not override it by callback cause callbacks run by interpreting
+		 * this this option.
+		 */
+		updateOptions: [updateOptionsByMetadata, runCallbacks]
 	};
+	$.autoNumeric.updateOptionsByMetadata = updateOptionsByMetadata;
+	$.autoNumeric.runCallbacks = runCallbacks;
 	/** deprecated way to access defaults and helper functions */
 	$.fn.autoNumeric.defaults = $.autoNumeric.defaults;
 	$.fn.autoNumeric.Strip = $.autoNumeric.Strip;
