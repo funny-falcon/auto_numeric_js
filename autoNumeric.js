@@ -348,52 +348,55 @@
 		var ivRounded = '';
 		var i = 0;
 		var nSign = '';
+		var rDec = (typeof(aPad) === 'boolean' || aPad == null) ? (aPad ? mDec : 0) : aPad * 1;
+		var truncateZeros = function(ivRounded) {
+			/** truncate not needed zeros */
+			ivRounded = ivRounded.replace(new RegExp('(\\.\\d{'+rDec+'})0*$'),'$1');
+			/** If there are no decimal places, we don't need a decimal point at the end */
+			if (rDec === 0) {
+				ivRounded = ivRounded.replace(/\.$/, '');
+			}
+			return ivRounded;
+		}
 		/** Checks if the iv (input Value)is a negative value */
 		if (iv.charAt(0) === '-'){
-			/** determines if the value is zero - if zero no negative sign */
-			nSign = (iv * 1 === 0) ? '' : '-';
+			nSign = '-';
 			/** removes the negative sign will be added back later if required */
 			iv = iv.replace('-', '');
 		}
+		/** prepend a zero if first character is not a digit (then it is likely to be a dot)*/
+		if (!iv.match(/^\d/)) {
+			iv = '0'+iv;
+		}
+		/** determines if the value is zero - if zero no negative sign */
+		if (nSign === '-' && iv * 1 === 0) {
+			nSign = '';
+		}
 		/** trims leading zero's if needed */
 		if ((iv * 1) > 0){
-			while (iv.substr(0,1) === '0' && iv.length > 1) {
-				iv = iv.substr(1);
-			}
+			iv = iv.replace(/^0*(\d)/, '$1');
 		}
 		/** decimal postion as an integer */
 		var dPos = iv.lastIndexOf('.');
-		/** prefix with a zero if the decimal point is the first character */
-		if (dPos === 0){
-			iv = '0' + iv;
-			dPos = 1;
-		}
-		/** Has an integer been passed in? */
-		if (dPos === -1 || dPos === iv.length - 1){
-			if (aPad && mDec > 0) {
-				ivRounded = (dPos === -1) ? iv + '.' : iv;
-				/** pads with zero */
-				for(i = 0; i < mDec; i++){
-						ivRounded += '0';
-				}
-				return nSign + ivRounded;
-			}
-			else {
-				return nSign + iv;
-			}
-		}
+		/** virtual decimal position */
+		var vdPos = dPos === -1 ? iv.length - 1 : dPos;
 		/** checks decimal places to determine if rounding is required */
-		var cDec = (iv.length - 1) - dPos;
-		if (cDec === mDec){
-			/** If true return value no rounding required */
-			return nSign + iv;
-		}
-		/** Do we already have less than the number of decimal places we want? */
-		if (cDec < mDec && aPad){
-			/** If so, pad out with zeros */
+		var cDec = (iv.length - 1) - vdPos;
+		/** check if no rounding is required */
+		if (cDec <= mDec) {
 			ivRounded = iv;
-			for(i = cDec; i < mDec; i++){
-				ivRounded += '0';
+			/** check if we need to pad with zeros */
+			if (cDec < rDec) {
+				if (dPos === -1) {
+					ivRounded += '.';
+				}
+				while(cDec < rDec) {
+					var zeros = '000000'.substring(0, rDec - cDec);
+					ivRounded += zeros;
+					cDec += zeros.length;
+				}
+			} else if (cDec > rDec ) {
+				ivRounded = truncateZeros(ivRounded);
 			}
 			return nSign + ivRounded;
 		}
@@ -401,12 +404,8 @@
 		var rLength = dPos + mDec;
 		/** test round */
 		var tRound = iv.charAt(rLength + 1) * 1;
-		/** new array*/
-		var ivArray = [];
-		/** populate ivArray with each digit in rLength */
-		for(i = 0; i <= rLength; i++){
-			ivArray[i] = iv.charAt(i);
-		}
+		/** array of characters */
+		var ivArray = iv.substring(0, rLength + 1).split('');
 		var odd = (iv.charAt(rLength) === '.') ? (iv.charAt(rLength - 1) % 2) : (iv.charAt(rLength) % 2);
 		if (
 			/** Round half up symetric */
@@ -440,24 +439,14 @@
 				/** if i does not equal 10 no more round up required */
 				if (ivArray[i] < 10){
 					break;
+				} else if (i > 0) {
+					ivArray[i] = '0';
 				}
 			}
 		}
 		/** Reconstruct the string, converting any 10's to 0's */
-		for (i=0; i <= rLength; i++){
-			/** routine to reconstruct non '10' */
-			if (ivArray[i] === '.' || ivArray[i] < 10 || i === 0){
-				ivRounded += ivArray[i];
-			}
-			/** converts 10's to 0 */
-			else {
-				ivRounded += '0';
-			}
-		}
-		/** If there are no decimal places, we don't need a decimal point */
-		if (mDec === 0){
-			ivRounded = ivRounded.replace('.', '');
-		}
+		ivArray = ivArray.slice(0, rLength + 1);
+		ivRounded = truncateZeros(ivArray.join(''));
 		/** return rounded value */
 		return nSign + ivRounded;
 	}
@@ -814,13 +803,31 @@
 		}
 	};
 
+	function getData($that) {
+		var data = $that.data('autoNumeric');
+		if (!data) {
+			data = {};
+			$that.data('autoNumeric', data);
+		}
+		return data;
+	}
+
 	function getHolder($that, options) {
-		var holder = $that.data('autoNumericHolder');
+		var data = getData($that);
+		var holder = data.holder;
 		if (holder === undefined) {
 			holder = new autoNumericHolder($that.get(0), options);
-			$that.data('autoNumericHolder', holder);
+			data.holder = holder;
 		}
 		return holder;
+	}
+
+	function getOptions($that) {
+		var data = $that.data('autoNumeric');
+		if ( data && data.holder ) {
+			return data.holder.options;
+		}
+		return {};
 	}
 
 	$.fn.autoNumeric = function(options) {
@@ -923,9 +930,15 @@
 	$.autoNumeric = {};
 	/**
 	 * public function that stripes the format and converts decimal seperator to a period
+	 * as of 1.7.2 `options` argument is deprecated, options are taken from initializer
 	 */
-	$.autoNumeric.Strip = function(ii, options){
-		var io = autoCode(autoGet(ii), options);
+	$.autoNumeric.Strip = function(ii){
+		var $that = autoGet(ii);
+		var options = getOptions($that);
+		if ( arguments[1] && typeof(arguments[1]) == 'object' ) {
+			options = $.extend({}, options, arguments[1]);
+		}
+		var io = autoCode($that, options);
 		var iv = autoGet(ii).val();
 		iv = autoStrip( iv, io);
 		iv = fixNumber( iv, io.aDec, io.aNeg );
@@ -934,30 +947,42 @@
 	};
 	/**
 	 * public function that recieves a numeric string and formats to the target input field
+	 * as of 1.7.2 `options` argument is deprecated, options are taken from initializer
 	 */
-	$.autoNumeric.Format = function(ii, iv, options){
+	$.autoNumeric.Format = function(ii, iv){
+		var $that = autoGet(ii);
+		var options = getOptions($that);
+		if ( arguments[2] && typeof(arguments[2]) == 'object' ) {
+			options = $.extend({}, options, arguments[2]);
+		}
 		iv += '';/* to string */
-		var io = autoCode(autoGet(ii), options);
+		var io = autoCode($that, options);
 		iv = autoRound(iv, io.mDec, io.mRound, io.aPad);
 		iv = presentNumber(iv, io.aDec, io.aNeg);
 		if ( !autoCheck(iv, io) ) { iv = autoRound('', io.mDec, io.mRound, io.aPad); }
 		return autoGroup(iv, io);
 	};
 	/**
-	 * get a number (as a number) from a field
+	 * get a number (as a number) from a field.
+	 * as of 1.7.2 argument is deprecated, options are taken from initializer
 	 * $('input#my').autoNumericGet()
-	 * $('input#my').autoNumericGet({aSign: '$', pSign: 'p'})
 	 */
-	$.fn.autoNumericGet = function(options){
-		return $.fn.autoNumeric.Strip(this, options);
+	$.fn.autoNumericGet = function(){
+		if ( arguments[0] ) {
+			return $.autoNumeric.Strip(this, arguments[0]);
+		}
+		return $.autoNumeric.Strip(this);
 	};
 	/**
 	 * set a number to a field, formatting it appropriatly
+	 * as of 1.7.2 second argument is deprecated, options are taken from initializer
 	 * $('input#my').autoNumericSet(2.423)
-	 * $('input#my').autoNumericSet(2.423, {aSign: '$', pSign: 'p'})
 	 */
-	$.fn.autoNumericSet = function(iv, options){
-		return this.val($.fn.autoNumeric.Format(this, iv, options));
+	$.fn.autoNumericSet = function(iv){
+		if ( arguments[1] ) {
+			return this.val($.autoNumeric.Format(this, iv, arguments[1]));
+		}
+		return this.val($.fn.autoNumeric.Format(this, iv));
 	};
 	/**
 	* plugin defaults
@@ -1032,6 +1057,7 @@
 		/** controls decimal padding
 		* aPad: true - always Pad decimals with zeros
 		* aPad: false - does not pad with zeros.
+		* aPad: `some number` - pad decimals with zero to number different from mDec
 		* thanks to Jonas Johansson for the suggestion
 		*/
 		aPad: true,
