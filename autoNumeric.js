@@ -351,7 +351,10 @@
 		var rDec = (typeof(aPad) === 'boolean' || aPad == null) ? (aPad ? mDec : 0) : aPad * 1;
 		var truncateZeros = function(ivRounded) {
 			/** truncate not needed zeros */
-			ivRounded = ivRounded.replace(new RegExp('(\\.\\d{'+rDec+'})0*$'),'$1');
+			var regex = rDec === 0 ? (/(\.[1-9]*)0*$/) :
+			            rDec === 1 ? (/(\.\d[1-9]*)0*$/) :
+				    new Regexp('(\\.\\d{'+rDec+'}[1-9]*)0*$');
+			ivRounded = ivRounded.replace(regex,'$1');
 			/** If there are no decimal places, we don't need a decimal point at the end */
 			if (rDec === 0) {
 				ivRounded = ivRounded.replace(/\.$/, '');
@@ -395,8 +398,10 @@
 					ivRounded += zeros;
 					cDec += zeros.length;
 				}
-			} else if (cDec > rDec ) {
+			} else if (cDec > rDec) {
 				ivRounded = truncateZeros(ivRounded);
+			} else if (cDec === 0 && rDec === 0) {
+				ivRounded = ivRounded.replace(/\.$/, '');
 			}
 			return nSign + ivRounded;
 		}
