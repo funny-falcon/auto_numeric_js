@@ -799,13 +799,31 @@
 		}
 	};
 
+	function getData($that) {
+		var data = $that.data('autoNumeric');
+		if (!data) {
+			data = {};
+			$that.data('autoNumeric', data);
+		}
+		return data;
+	}
+
 	function getHolder($that, options) {
-		var holder = $that.data('autoNumericHolder');
+		var data = getData($that);
+		var holder = data.holder;
 		if (holder === undefined) {
 			holder = new autoNumericHolder($that.get(0), options);
-			$that.data('autoNumericHolder', holder);
+			data.holder = holder;
 		}
 		return holder;
+	}
+
+	function getOptions($that) {
+		var data = $that.data('autoNumeric');
+		if ( data && data.holder ) {
+			return data.holder.options;
+		}
+		return {};
 	}
 
 	$.fn.autoNumeric = function(options) {
@@ -908,9 +926,15 @@
 	$.autoNumeric = {};
 	/**
 	 * public function that stripes the format and converts decimal seperator to a period
+	 * as of 1.7.2 `options` argument is deprecated, options are taken from initializer
 	 */
-	$.autoNumeric.Strip = function(ii, options){
-		var io = autoCode(autoGet(ii), options);
+	$.autoNumeric.Strip = function(ii){
+		var $that = autoGet(ii);
+		var options = getOptions($that);
+		if ( arguments[1] && typeof(arguments[1]) == 'object' ) {
+			options = $.extend({}, options, arguments[1]);
+		}
+		var io = autoCode($that, options);
 		var iv = autoGet(ii).val();
 		iv = autoStrip( iv, io);
 		iv = fixNumber( iv, io.aDec, io.aNeg );
@@ -919,30 +943,42 @@
 	};
 	/**
 	 * public function that recieves a numeric string and formats to the target input field
+	 * as of 1.7.2 `options` argument is deprecated, options are taken from initializer
 	 */
-	$.autoNumeric.Format = function(ii, iv, options){
+	$.autoNumeric.Format = function(ii, iv){
+		var $that = autoGet(ii);
+		var options = getOptions($that);
+		if ( arguments[2] && typeof(arguments[2]) == 'object' ) {
+			options = $.extend({}, options, arguments[2]);
+		}
 		iv += '';/* to string */
-		var io = autoCode(autoGet(ii), options);
+		var io = autoCode($that, options);
 		iv = autoRound(iv, io.mDec, io.mRound, io.aPad);
 		iv = presentNumber(iv, io.aDec, io.aNeg);
 		if ( !autoCheck(iv, io) ) { iv = autoRound('', io.mDec, io.mRound, io.aPad); }
 		return autoGroup(iv, io);
 	};
 	/**
-	 * get a number (as a number) from a field
+	 * get a number (as a number) from a field.
+	 * as of 1.7.2 argument is deprecated, options are taken from initializer
 	 * $('input#my').autoNumericGet()
-	 * $('input#my').autoNumericGet({aSign: '$', pSign: 'p'})
 	 */
-	$.fn.autoNumericGet = function(options){
-		return $.fn.autoNumeric.Strip(this, options);
+	$.fn.autoNumericGet = function(){
+		if ( arguments[0] ) {
+			return $.autoNumeric.Strip(this, arguments[0]);
+		}
+		return $.autoNumeric.Strip(this);
 	};
 	/**
 	 * set a number to a field, formatting it appropriatly
+	 * as of 1.7.2 second argument is deprecated, options are taken from initializer
 	 * $('input#my').autoNumericSet(2.423)
-	 * $('input#my').autoNumericSet(2.423, {aSign: '$', pSign: 'p'})
 	 */
-	$.fn.autoNumericSet = function(iv, options){
-		return this.val($.fn.autoNumeric.Format(this, iv, options));
+	$.fn.autoNumericSet = function(iv){
+		if ( arguments[1] ) {
+			return this.val($.autoNumeric.Format(this, iv, arguments[1]));
+		}
+		return this.val($.fn.autoNumeric.Format(this, iv));
 	};
 	/**
 	* plugin defaults
