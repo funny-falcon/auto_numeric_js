@@ -2,7 +2,7 @@
  * autoNumeric.js
  * @author: Bob Knothe
  * @author: Sokolov Yura aka funny_falcon
- * @version: 1.7.0
+ * @version: 1.7.2
  *
  * Created by Robert J. Knothe on 2010-10-25. Please report any bug at http://www.decorplanit.com/plugin/
  * Created by Sokolov Yura on 2010-11-07. http://github.com/funny_falcon
@@ -805,7 +805,7 @@
 	function getHolder($that, options) {
 		var data = getData($that);
 		var holder = data.holder;
-		if (holder === undefined) {
+		if (holder === undefined && options) {
 			holder = new autoNumericHolder($that.get(0), options);
 			data.holder = holder;
 		}
@@ -820,94 +820,115 @@
 		return {};
 	}
 
-	$.fn.autoNumeric = function(options) {
-		return this.each(function() {
-			var iv = $(this), holder = getHolder(iv, options);
+	function onInit(options) {
+		options = options || {};
+		var iv = $(this), holder = getHolder(iv, options);
 
-			if ( holder.io.aForm && (this.value || holder.io.wEmpty !== 'empty') ) {
-				iv.autoNumericSet(iv.autoNumericGet(options), options);
-			}
-		}).keydown(function(e){
-			var iv = $(e.target), holder = getHolder(iv, options);
-			holder.init(e);
-			if ( holder.skipAllways(e) ) {
-				holder.processed = true;
-				return true;
-			}
-			if ( holder.processAllways() ) {
-				holder.processed = true;
-				holder.formatQuick();
-				e.preventDefault();
-				return false;
-			} else {
-				holder.formatted = false;
-			}
+		if ( holder.io.aForm && (this.value || holder.io.wEmpty !== 'empty') ) {
+			iv.autoNumericSet(iv.autoNumericGet(options), options);
+		}
+	}
+
+	function onKeyDown(e) {
+		var iv = $(e.target), holder = getHolder(iv);
+		holder.init(e);
+		if ( holder.skipAllways(e) ) {
+			holder.processed = true;
 			return true;
-		}).keypress(function(e){
-			var iv = $(e.target), holder = getHolder(iv, options);
-			var processed = holder.processed;
-			holder.init(e);
-			if ( holder.skipAllways(e) ) {
-				return true;
-			}
-			if ( processed ) {
-				e.preventDefault();
-				return false;
-			}
-			if ( holder.processAllways() || holder.processKeypress() ) {
-				holder.formatQuick();
-				e.preventDefault();
-				return false;
+		}
+		if ( holder.processAllways() ) {
+			holder.processed = true;
+			holder.formatQuick();
+			e.preventDefault();
+			return false;
+		} else {
+			holder.formatted = false;
+		}
+		return true;
+	}
+	
+	function onKeyPress(e) {
+		var iv = $(e.target), holder = getHolder(iv);
+		var processed = holder.processed;
+		holder.init(e);
+		if ( holder.skipAllways(e) ) {
+			return true;
+		}
+		if ( processed ) {
+			e.preventDefault();
+			return false;
+		}
+		if ( holder.processAllways() || holder.processKeypress() ) {
+			holder.formatQuick();
+			e.preventDefault();
+			return false;
+		} else {
+			holder.formatted = false;
+		}
+	}
+
+	function onKeyUp(e) {
+		var iv = $(e.target), holder = getHolder(iv);
+		holder.init(e);
+
+		var skip = holder.skipAllways(e);
+		holder.kdCode = 0;
+		delete holder.valuePartsBeforePaste;
+
+		if ( skip )              { return true; }
+		if ( this.value === '' ) { return true; }
+
+		if ( !holder.formatted ) {
+			holder.formatQuick();
+		}
+	}
+
+	function onFocusIn(e) {
+		var iv = $(e.target), holder = getHolder(iv);
+		holder.inVal= iv.val();
+		var onempty = checkEmpty(holder.inVal, holder.io, true);
+		if ( onempty !== null ) {
+			iv.val(onempty);
+		}
+	}
+
+	/** start change - thanks to Javier P. corrected the inline onChange event  added focusout version 1.55*/
+	function onFocusOut(e) {
+		var iv = $(e.target), holder = getHolder(iv);
+		var io = holder.io, value = iv.val(), origValue = value;
+		if (value !== ''){
+			value = autoStrip(value, io);
+			if ( checkEmpty(value, io) === null && autoCheck(value, io) ) {
+				value = fixNumber(value, io.aDec, io.aNeg);
+				value = autoRound(value, io.mDec, io.mRound, io.aPad);
+				value = presentNumber(value, io.aDec, io.aNeg);
 			} else {
-				holder.formatted = false;
+				value = '';
 			}
-		}).keyup(function(e){
-			var iv = $(e.target), holder = getHolder(iv, options);
-			holder.init(e);
+		}
+		var groupedValue = checkEmpty(value, io, false);
+		if ( groupedValue === null ) {
+			groupedValue = autoGroup(value, io);
+		}
+		if ( groupedValue !== origValue ) {
+			iv.val( groupedValue );
+		}
+		if ( groupedValue !== holder.inVal ) {
+			iv.change();
+			delete holder.inVal;
+		}
+	}
 
-			var skip = holder.skipAllways(e);
-			holder.kdCode = 0;
-			delete holder.valuePartsBeforePaste;
-
-			if ( skip )              { return true; }
-			if ( this.value === '' ) { return true; }
-
-			if ( !holder.formatted ) {
-				holder.formatQuick();
-			}
-		/** start change - thanks to Javier P. corrected the inline onChange event  added focusout version 1.55*/
-		}).focusout(function(e){
-			var iv = $(e.target), holder = getHolder(iv, options);
-			var io = holder.io, value = iv.val(), origValue = value;
-			if (value !== ''){
-				value = autoStrip(value, io);
-				if ( checkEmpty(value, io) === null && autoCheck(value, io) ) {
-					value = fixNumber(value, io.aDec, io.aNeg);
-					value = autoRound(value, io.mDec, io.mRound, io.aPad);
-					value = presentNumber(value, io.aDec, io.aNeg);
-				} else {
-					value = '';
-				}
-			}
-			var groupedValue = checkEmpty(value, io, false);
-			if ( groupedValue === null ) {
-				groupedValue = autoGroup(value, io);
-			}
-			if ( groupedValue !== origValue ) {
-				iv.val( groupedValue );
-			}
-			if ( groupedValue !== holder.inVal ) {
-				iv.change();
-				delete holder.inVal;
-			}
-		}).focusin(function(e){
-			var iv = $(e.target), holder = getHolder(iv, options);
-			holder.inVal= iv.val();
-			var onempty = checkEmpty(holder.inVal, holder.io, true);
-			if ( onempty !== null ) {
-				iv.val(onempty);
-			}
-		});
+	$.fn.autoNumeric = function(options) {
+		return this.each(function(){ onInit.call(this, options)}).
+			unbind('.autoNumeric').
+			bind({
+				'keydown.autoNumeric':  onKeyDown,
+				'keypress.autoNumeric': onKeyPress,
+				'keyup.autoNumeric':    onKeyUp,
+				'focusin.autoNumeric':  onFocusIn,
+				'focusout.autoNumeric': onFocusOut
+			});
 	};
 	/** thanks to Anthony & Evan C */
 	function autoGet(obj) {
