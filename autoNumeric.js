@@ -766,8 +766,7 @@
 				/** prepare regexp which searches for cursor position
 				   from unformatted left part */
 				var left_ar = parts[0].split('');
-				var i;
-				for( i in left_ar ) {
+				for(var i = 0; i < left_ar.length; i++ ) {
 					if ( !left_ar[i].match('\\d') ) { left_ar[i] = '\\'+left_ar[i]; }
 				}
 				var leftReg = new RegExp('^.*?'+ left_ar.join('.*?'));
